@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      template="/WEB-INF/template.xhtml">
+
+
+    <h:head>
+
+        <p:ajaxStatus  style="width:32px;height:32px;position:fixed;left: 10px;top: 10px">
+            <f:facet name="start">
+                <p:graphicImage width="50" height="50" name="images/ajax001.gif" library="spark-layout"/>
+            </f:facet>
+
+            <f:facet name="complete">
+                <h:outputText value="" />
+            </f:facet>
+        </p:ajaxStatus>
+
+
+        <f:facet name="first">
+            <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+        </f:facet>
+        <title>Pesquisa de Satisfação do Cliente</title>
+        <h:outputScript name="js/layout.js" library="spark-layout" />
+
+        <h:outputText value="&lt;!--[if gte IE 9]&gt;" escape="false" />
+        <style type="text/css">
+            /* styles for IE 9 */
+        </style>
+        <h:outputText value="&lt;![endif]--&gt;" escape="false" />
+        <link rel="icon" type="image/x-icon" href="https://a.staticimageserver.com/img/favicon.ico" />
+
+        <ui:insert name="head" />
+        <f:metadata>
+            <f:viewParam name="se"  value="#{pesquisaSatisfacaoController.seqEmpresa}" />
+            <f:viewParam name="sd"  value="#{pesquisaSatisfacaoController.seqDocumento}" />
+            <f:viewParam name="sp"  value="#{pesquisaSatisfacaoController.seqPesquisa}" />
+            <f:viewParam name="spc"  value="#{pesquisaSatisfacaoController.seqParceiro}" />
+            <f:viewAction  action="#{pesquisaSatisfacaoController.iniciar()}" />
+        </f:metadata>
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+        </style>
+    </h:head>
+
+    <h:body>
+        <!--p:panelGrid columns="3" layout="grid" style="position: fixed; margin-top: 0;margin-left: 0;margin-right: 0;width: 100%;margin-bottom: 5" columnClasses="ui-grid-col-0,ui-grid-col-10, ui-grid-col-0"-->
+
+        <h:form id="frmPrincipal" >
+            <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-0,ui-grid-col-10, ui-grid-col-0">
+                <p/>
+                <p:graphicImage value="/relatorio/pesquisa.png" library="spark-layout" styleClass="MarAuto MarTop20 MarBot10"/>
+                <p/>
+            </p:panelGrid>
+<!--p:commandButton value="imprimir..." actionListener="#{loginController.download()}" ajax="false" immediate="true"/-->
+            <div id="layout-portlets-cover">
+                <div class="other-pages-box Container50 Responsive50 MarAuto Fnone TexAlCenter ShadowGray MarTop10" style="margin-top:5%; background-repeat:no-repeat; background-position:center; background-size:cover;">
+                    <div class="Container80 Fnone MarAuto TexAlCenter">
+
+                        <div class="EmptyBox10"></div>
+                        <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                        <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                        <div class="TexAlLeft">
+                            <h2 class="BigTopic">Pesquisa de Satisfação do Cliente</h2>
+                            <p>
+                                A <b style="color: blue">AWS ENGENHARIA</b>, BUSCANDO A MELHORIA <b>CONTÍNUA</b> NO ATENDIMENTO AOS CLIENTES, SOLICITA A GENTILEZA DE VOSSA EMPRESA PARTICIPAR, RESPONDENDO ÀS QUESTÕES ABAIXO.
+                                A VOSSA COLABORAÇÃO É MUITO IMPORTANTE, PARA QUE POSSAMOS IMPLEMENTAR AÇÕES, PARA MELHOR ATENDÊ-LO.
+                            </p>
+                            <p>
+                                Assinalar a opção que melhor descreve o desempenho da AWS em cada item, onde:
+                            </p>
+                            <p style="font-weight: bold;color:blue">
+                                5 = Excelente;     4 = Bom;     3 = Regular;     2 = Ruim;     1 = Insuficiente
+                            </p>
+                            <p>
+                                Para itens classificados como 2 ou 1, favor explicar o motivo.
+                            </p>
+
+                            <p:separator/>
+                            <p:panelGrid layout="grid" styleClass="ui-panelgrid-blank" columns="1">
+
+                                <p:outputLabel  value="1. Qualidade no Atendimento. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaUm}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 1">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="2. Facilidade de Aquisição de Serviços."/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaDois}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 2">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="3. Agilidade na Definição e Orçamento dos Serviços. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaTres}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 3">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="4. Clareza quanto às Especificações dos Serviços. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaQuatro}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 4">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="5. Atendimento quanto ao Prazo de Realização de Vistorias. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaCinco}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 5">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="6. Atendimento quanto ao Prazo de entrega de projeto. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaSeis}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 6">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="7. Atendimento quanto ao Prazo de Emissão de Certificados. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaSete}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 7">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="8. Qualidade e Clareza dos Serviços Realizados. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaOito}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 8">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="9. Satisfação quanto ao Serviço Adquirido. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaNove}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 9">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="10. Conformidade do Serviço proposto com o realizado. "/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaDez}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 10">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="11. Atendimento pós Certificação."/>
+                                <p:selectOneRadio value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.perguntaOnze}"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Informe sua nota para a pergunta 11">
+                                    <f:selectItem itemLabel="5" itemValue="#{5}" />
+                                    <f:selectItem itemLabel="4" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="3" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="2" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="1" itemValue="#{1}" />
+                                </p:selectOneRadio>
+                                <p/>
+                                <p:outputLabel value="Comentário ou Observações"/>
+                                <p:inputTextarea style="width: 100%" autoResize="true" value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.comentarioObservacao}" />
+
+                                <h2 class="BigTopic">Identificação do validador</h2>
+
+                                <p:messages id="messages1"  autoUpdate="true" closable="true" />
+
+                                <p:panelGrid columns="2" layout="grid"  styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-10">
+                                    <p:outputLabel value="Empresa"/>
+                                    <p:inputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.empresaValidador}" style="width: 100%" disabled="true" required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Favor informar Empresa"/>
+                                    <p:outputLabel value="Local"/>
+                                    <p:inputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.localValidador}"  style="width: 100%"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Favor informar Local"/>
+                                    <p:outputLabel value="Funcionário"/>
+                                    <p:inputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.funcionarioValidador}"  style="width: 100%"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Favor informar Funcionário"/>
+                                    <p:outputLabel value="Cargo"/>
+                                    <p:inputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.cargoValidador}"  style="width: 100%"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Favor informar Cargo"/>
+                                    <p:outputLabel value="Área"/>
+                                    <p:inputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.areaValidador}" style="width: 100%"  required="#{param['frmPrincipal:btnEnviar']!=null}" requiredMessage="Favor informar Área"/>
+
+                                    <p:separator rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+                                    <p:separator rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+
+                                    <p:outputLabel value="Código" rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+                                    <h:outputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.codigoDocumento}" style="font-weight: bold" rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+                                    <p:outputLabel value="Tipo de Documento" rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+                                    <h:outputText value="#{pesquisaSatisfacaoController.pesquisaSatisfacao.tipoDocumento}" style="font-weight: bold"  rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario != null}"/>
+
+                                    <p:separator />
+                                    <p:separator/>
+
+                                    <p:commandButton id="btnEnviar" value="Enviar" actionListener="#{pesquisaSatisfacaoController.salvar()}" rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario == null}" onsuccess="PF('statusDialog').show();" update="frmPrincipal"/>
+                                    <p:commandButton value="Limpar" actionListener="#{pesquisaSatisfacaoController.limpar()}" rendered="#{pesquisaSatisfacaoController.loginController.usuario.seqUsuario == null}" update="frmPrincipal"/>
+                                    <p:commandButton value="Voltar" actionListener="#{pesquisaSatisfacaoController.fecharTela()}" rendered="#{pesquisaSatisfacaoController.loginController.usuario.acRelPesqSatisfacao > 0}" update="frmPrincipal"/>
+                                    <p:commandButton value="Deletar"  styleClass="RedButton" actionListener="#{pesquisaSatisfacaoController.deletar()}" rendered="#{pesquisaSatisfacaoController.loginController.usuario.acRelPesqSatisfacao > 0}" update="frmPrincipal"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p:dialog modal="true" widgetVar="statusDialog" header="AWS Service Informa : " draggable="false" closable="true" resizable="false">
+                <p:outputLabel value="Agradecemos pela sua participação!" />
+            </p:dialog>
+        </h:form>
+
+        <br/>
+        <br/>
+        <br/>
+
+        <h:outputStylesheet name="css/core-layout.css" library="spark-layout" />
+        <h:outputStylesheet name="css/font-awesome.css" library="spark-layout" />
+        <h:outputStylesheet name="css/animate.css" library="spark-layout" />
+        <h:outputStylesheet name="css/spark-layout.css" library="spark-layout" />
+        <div id="layout-portlets-cover" style="margin-bottom: 0">
+            <ui:include src="/WEB-INF/footer.xhtml" />
+        </div>
+    </h:body>
+
+</html>

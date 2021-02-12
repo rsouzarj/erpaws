@@ -1,0 +1,168 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+
+
+
+        </style>
+
+        <f:metadata>
+            <f:viewAction  action="#{mensagemController.iniciar()}" />
+        </f:metadata>
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <p:layout style="min-width:400px;min-height:600px;">
+                        <p:layoutUnit position="north" size="70">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-1">
+                                <p:commandButton value="Nova" onclick="PF('composeDlg').show()" type="button" />
+                            </p:panelGrid>
+                        </p:layoutUnit>
+
+                        <p:layoutUnit position="west" header="Mensagem">
+
+
+
+                            <h:form id="frmLista" >
+
+
+                                <p:tree value="#{mensagemController.mailboxes}" var="box" selectionMode="single"  style="width:170px; height: 100%" >
+                                    <p:treeNode icon="fa-jsfiddle">
+                                        <h:outputText value="#{box}" />
+                                    </p:treeNode>
+
+                                    <p:treeNode type="e" icon="fa-jsfiddle" styleClass="cor">
+                                        <h:outputText value="#{box}"/>
+                                    </p:treeNode>
+
+                                    <p:treeNode type="l" icon="fa-tumblr">
+                                        <h:outputText value="#{box}"/>
+                                    </p:treeNode>
+
+                                    <p:treeNode type="e" icon="ui-icon-transfer-e-w">
+                                        <h:outputText value="#{box}"/>
+                                    </p:treeNode>
+
+                                </p:tree>                        
+
+
+
+                            </h:form>
+
+                        </p:layoutUnit>
+
+                        <p:layoutUnit position="center">
+                            <p:layout>
+
+                                <p:layoutUnit position="north" size="50%" resizable="true" styleClass="nestedUnit">
+                                    <p:dataTable var="mail" >
+
+                                        <p:column headerText="From" sortBy="from">
+                                            Teste
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:layoutUnit>
+
+
+                                <p:layoutUnit position="center" styleClass="nestedUnit">
+
+                                    <p:outputPanel id="mailViewer">
+                                        <h:outputText value="Teste" />
+                                    </p:outputPanel>
+
+                                </p:layoutUnit>
+
+
+                            </p:layout>                 
+                        </p:layoutUnit>                            
+
+                    </p:layout>                 
+
+                </div>
+            </div>
+        </div>
+
+        <p:dialog widgetVar="composeDlg" modal="true" header="Nova mensagem" width="530" showEffect="fade" hideEffect="fade">
+
+            <h:form>
+
+                <h:panelGrid columns="2" cellspacing="5" border="0">
+                    <h:outputLabel value="Para: " />
+                    <p:selectCheckboxMenu  value="#{mensagemController.usuarioSelecionadoPara}" label="Selecione os Destinatários"
+                                           filter="true" filterMatchMode="startsWith" style="width: 100%">
+                        <f:selectItems value="#{mensagemController.listaUsuario}" var="u" itemValue="#{u.seqUsuario}" itemLabel="#{u.parceiroNome}" />
+                    </p:selectCheckboxMenu>
+                    <h:outputLabel for="cc" value="CC: " />
+                    <p:selectCheckboxMenu  value="#{mensagemController.usuarioSelecionadoCopia}" label="Selecione os Destinatários"
+                                           filter="true" filterMatchMode="startsWith" style="width: 100%">
+                        <f:selectItems value="#{mensagemController.listaUsuario}" var="u" itemValue="#{u.seqUsuario}" itemLabel="#{u.parceiroNome}" />
+                    </p:selectCheckboxMenu>
+
+                    <h:outputLabel for="subject" value="Assunto:" />
+                    <p:inputText id="subject"  value="#{mensagemController.mensagem.assunto}" size="50"/>
+                </h:panelGrid>
+
+                <p:separator />
+
+                <p:editor widgetVar="editor" value="#{mensagemController.mensagem.descricao}"/>
+
+                <p:separator />
+
+                <p:commandButton value="Enviar" onclick="PF('composeDlg').hide()"  process="@this"/>
+                <p:commandButton value="Cancelar" onclick="PF('composeDlg').hide()" type="button" actionListener="#{mensagemController.salvar(0)}"/>
+
+            </h:form>
+
+        </p:dialog>        
+    </ui:define>
+
+</ui:composition>

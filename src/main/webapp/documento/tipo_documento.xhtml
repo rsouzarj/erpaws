@@ -1,0 +1,410 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*botão topo*/
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+        </style>
+
+        <f:metadata>
+            <f:viewAction  action="#{tipoDocumentoController.iniciar()}" />
+        </f:metadata>
+
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+
+                    <h2 class="BigTopic">Tipo de Documento</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <h:form id="frmLista" >
+
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid rendered="#{tipoDocumentoController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-0,ui-grid-col-0">
+                                <p:outputLabel value="Pesquisa"/>
+                                <p:outputLabel value=""/>
+                                <p:outputLabel value=""/>
+
+                                <p:inputText value="#{tipoDocumentoController.pesquisa}"/>
+                                <p:commandButton value="Buscar" actionListener="#{tipoDocumentoController.listar()}" update="listaPesquisa"/>
+                                <p:commandButton value="Novo" actionListener="#{tipoDocumentoController.novo()}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acCadTdocumento == 1}" />
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="p" value="#{tipoDocumentoController.listaTipoDocumento}" rendered="#{tipoDocumentoController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+
+                                <p:column headerText="Nome" sortBy="#{p.nome}">
+                                    <p:commandLink value="#{p.nome}"  title="#{p.nome}"  actionListener="#{tipoDocumentoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Próx. Código" sortBy="#{p.ordem}">
+                                    <p:commandLink value="#{p.proximoCodigo}"  title="#{p.proximoCodigo}"  actionListener="#{tipoDocumentoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Situação" sortBy="#{p.situacao}">
+                                    <p:commandLink value="#{p.situacao}"  title="#{p.situacao}"  actionListener="#{tipoDocumentoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{tipoDocumentoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+                            </p:dataTable>
+
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe" enctype="multipart/form-data"  >
+
+
+                        <p:panelGrid rendered="#{tipoDocumentoController.tela == 1}" layout="grid"  columns="1" styleClass="ui-panelgrid-blank" > 
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+
+                                <h:outputText value="Nome" />
+                                <p:inputText value="#{tipoDocumentoController.tipoDocumento.nome}" required="true" requiredMessage="Nome"/>                
+
+                                <h:outputText value="Ordem no Menu" />
+                                <p:inputText value="#{tipoDocumentoController.tipoDocumento.ordem}" />
+
+                                <h:outputText value="Próximo Código" />
+                                <p:inputText value="#{tipoDocumentoController.tipoDocumento.proximoCodigo}" />
+
+                                <h:outputText value="Situação" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.situacao}" >
+                                    <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                    <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Escopo" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcEscopo}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Colaborador no Escopo do Serviço" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcColaborador}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Ponto de Serviço" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcPontoServico}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Tabela de Preço" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcTabelaPreco}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Gerar Boleto" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcGeraBoleto}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Equipamento" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcEquipamento}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Embarcação" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcEmbarcacao}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Conta Bancária" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcConta}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Forma de Pagamento" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcFormaPagamento   }" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <h:outputText value="Condição de pagamento" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcCondicaoPagamento}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+                                <!--h:outputText value="Tipo de Movimento" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcTipoMovimentoFin}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu-->
+
+                                <h:outputText value="Assinatura do Colaborador Responsável" />
+                                <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.opcAssColaborador}" >
+                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                </p:selectOneMenu>
+
+
+                                <h:outputText value="Data de Cadastro" />
+                                <h:outputText value="#{tipoDocumentoController.tipoDocumento.dataCadastro}" >                
+                                    <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                </h:outputText>
+
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Modelo" />
+                                    <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumento.template}" >
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - M1" itemValue="M1" />
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - M2" itemValue="M2" />
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - M3" itemValue="M3" />
+                                        <f:selectItem itemLabel="Proposta/Contrato de Prestação Serviço - M4" itemValue="M4" />
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - Vistoria de Seguro" itemValue="M7" />
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - Auditoria" itemValue="M8" />
+                                        <f:selectItem itemLabel="Proposta de Prestação de Serviço - Condition Survey" itemValue="M9" />
+                                        <f:selectItem itemLabel="Ordem de Serviço - M5" itemValue="M5" />
+                                        <f:selectItem itemLabel="Ordem de Cobrança - M6" itemValue="M6" />
+                                        <f:selectItem itemLabel="Boletim de Medição" itemValue="BM" />
+
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+
+                            </p:panelGrid>
+
+
+
+
+
+                            <p:separator/>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{tipoDocumentoController.tipoDocumento.seqTipoDocumento > 0}"> 
+
+                                <p:accordionPanel id="acdVinculo" activeIndex="null">
+                                    <p:tab title="Etapas do Documento">
+                                        <p:messages  autoUpdate="true" closable="true" />
+
+
+                                        <p:dataTable id="listaVinculo" var="v" value="#{tipoDocumentoController.listaDocumentoEtapa}" emptyMessage="Lista vazia" reflow="true" style="">
+                                            <p:column headerText="Nome" sortBy="#{v.nome}">
+                                                <p:commandLink value="#{v.nome}"  title="#{v.nome}"  actionListener="#{tipoDocumentoController.selecionarEtapaDocumento(v)}"  update=":frmDetalhe" />
+                                            </p:column>
+
+                                            <p:column headerText="Ordem" sortBy="#{v.ordem}">
+                                                <p:outputLabel value="#{v.ordem}"  title="#{v.ordem}"  />
+                                            </p:column>
+
+                                            <p:column headerText="Data de Cadastro" sortBy="#{v.dataCadastro}">
+                                                <p:outputLabel value="#{v.dataCadastro}"  title="#{v.dataCadastro}">
+                                                    <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                                </p:outputLabel>
+                                            </p:column>
+
+                                            <p:column headerText="Principal" sortBy="#{v.principal}">
+                                                <p:outputLabel value="#{v.principal}"  title="#{v.principal}"/>
+                                            </p:column>
+
+                                            <p:column headerText="Situação" sortBy="#{v.situacao}">
+                                                <p:outputLabel value="#{v.situacao}"  title="#{v.situacao}"/>
+                                            </p:column>
+
+                                            <p:column headerText="Remover" width="8%" rendered="#{loginController.usuario.acCadTdocumento == 1}">
+                                                <p:commandButton icon="fa fa-eraser Fs18 white" actionListener="#{tipoDocumentoController.deletarEtapaDocumento(v)}"  immediate="true" update=":frmLista listaVinculo" >
+                                                    <p:confirm header="Confirmação" message="Deseja excluir a Etapa?" icon="ui-icon-alert" />
+                                                </p:commandButton>
+
+                                            </p:column>
+                                        </p:dataTable>                                        
+
+                                        <p:separator/>
+
+                                        <p:panelGrid id="pnlVinculo"  columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-8,ui-grid-col-4,ui-grid-col-2"> 
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:outputLabel value="Nome"/>
+                                                <p:inputText value="#{tipoDocumentoController.documentoEtapa.nome}"/>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:outputLabel value="Ordem"/>
+                                                <p:inputText value="#{tipoDocumentoController.documentoEtapa.ordem}"/>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <h:outputText value="Etapa Inicial do Documento" />
+                                                <p:selectOneMenu value="#{tipoDocumentoController.documentoEtapa.principal}" >
+                                                    <f:selectItem itemLabel="Não" itemValue="Não" />
+                                                    <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <h:outputText value="Situação" />
+                                                <p:selectOneMenu style="width: 181px" value="#{tipoDocumentoController.documentoEtapa.situacao}" >
+                                                    <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                                    <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+
+
+                                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acCadTdocumento == 1}" > 
+                                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:commandButton value="Novo" actionListener="#{tipoDocumentoController.novoEtapaDocumento()}" update="pnlVinculo listaVinculo" />
+                                                <p:commandButton value="Salvar" actionListener="#{tipoDocumentoController.salvarEtapaDocumento()}" update=":frmLista pnlVinculo listaVinculo" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+
+                                    </p:tab>
+
+                                    <p:tab title="Documentos que podem ser gerados">
+                                        <p:messages  autoUpdate="true" closable="true" />
+
+
+                                        <p:dataTable var="v" value="#{tipoDocumentoController.listaTipoDocumentoGerar}" emptyMessage="Lista vazia" reflow="true" style="">
+                                            <p:column headerText="Nome" sortBy="#{v.tipoDocumentoFilho}">
+                                                <p:commandLink value="#{v.tipoDocumentoFilho}"  title="#{v.tipoDocumentoFilho}"  actionListener="#{tipoDocumentoController.SelecionarGerar(v)}"  update=":frmDetalhe" />
+                                            </p:column>
+
+                                            <p:column headerText="Remover" width="8%" rendered="#{loginController.usuario.acCadTdocumento == 1}">
+                                                <p:commandButton icon="fa fa-eraser Fs18 white" actionListener="#{tipoDocumentoController.deletarGerar(v)}"  immediate="true" update=":frmDetalhe" >
+                                                    <p:confirm header="Confirmação" message="Deseja excluir?" icon="ui-icon-alert" />
+                                                </p:commandButton>
+
+                                            </p:column>
+                                        </p:dataTable>                                        
+
+                                        <p:separator/>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Tipo de Documento" />
+                                            <p:selectOneMenu value="#{tipoDocumentoController.tipoDocumentoGerar.seqTipoDocumentoFilho}" >
+                                                <f:selectItem itemLabel="Selecione o Tipo de Documento" itemValue="" />
+                                                <f:selectItems value="#{tipoDocumentoController.listaTipoDocumento2}" var="t" itemLabel="#{t.nome}" itemValue="#{t.seqTipoDocumento}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acCadTdocumento == 1}"> 
+                                                <p:commandButton value="Novo" actionListener="#{tipoDocumentoController.novoGerar()}" update=":frmDetalhe" />
+                                                <p:commandButton value="Salvar" actionListener="#{tipoDocumentoController.salvarGerar()}" update=":frmDetalhe" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+
+                                    </p:tab>
+                                </p:accordionPanel>
+
+
+                            </p:panelGrid>
+
+
+                            <h2 class="BigTopic"> </h2>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0">
+                                <p:commandButton value="Salvar e Fechar" ajax="false" actionListener="#{tipoDocumentoController.salvar(0)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acCadTdocumento == 1}"/>
+                                <p:commandButton value="Salvar" ajax="false" actionListener="#{tipoDocumentoController.salvar(1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acCadTdocumento == 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{tipoDocumentoController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{tipoDocumentoController.deletar()}" rendered="#{tipoDocumentoController.tipoDocumento.seqTipoDocumento!=0 and loginController.usuario.acCadTdocumento == 1}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

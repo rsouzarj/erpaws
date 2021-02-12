@@ -1,0 +1,185 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+            h2{color:black;}
+
+        </style>
+        
+         <f:metadata>
+            <f:viewAction  action="#{nvAvisosController.iniciar()}" />
+        </f:metadata>
+        
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+                    
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <!-- <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3">
+                                     <h:outputText value="Tempo para Avisoy "/>
+                                     <p:selectOneMenu filter="true" filterMatchMode="contains" >
+                                         <f:selectItem value="#{null}" itemLabel="90D" itemValue="#{null}" />
+                                         <f:selectItem value="#{null}" itemLabel="60D" itemValue="#{null}" />
+                                         <f:selectItem value="#{null}" itemLabel="30D" itemValue="#{null}" />
+                                     </p:selectOneMenu> 
+                                 </p:panelGrid> -->
+                            
+                            <p:panelGrid rendered="#{loginController.usuario.acOpCertificado == 1}" columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-4">
+                                <h2 >Listagem de Certificados para Notificação de Vencimento ao Cliente (90 Dias)</h2>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <h2 >Exportar Excel</h2>
+                                <h:commandLink title="Exportar Excel">
+                                    <img src="../images/excel.png" alt="Smiley face" height="35" width="35"/>
+                                    <p:dataExporter type="xls" encoding="iso-8859-1" target="listaPesquisa" fileName="Avisos" pageOnly="false" postProcessor="#{financeiroController.postProcessXLS}"/>
+                                </h:commandLink>  
+                            </p:panelGrid>
+                            </p:panelGrid>
+                            
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                            	<p:separator/>
+                            	                                 
+                                 <div class="Container100 Responsive100" >
+			                            <p:dataTable id="listaPesquisa" reflow="true" style=""
+                                                                 var="p" value="#{nvAvisosController.listaAvisos}"  
+			                            			emptyMessage="Lista vazia">
+			                                <p:column headerText="Identificação" >
+                                                            <h:outputText value="#{p.identificacao}"  title="#{p.identificacao}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Certificado" >
+                                                            <h:outputText value="#{p.tipoCertificado}"  title="#{p.tipoCertificado}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Embarcação" >
+                                                            <h:outputText value="#{p.embarcacao}"  title="#{p.embarcacao}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Cliente" >
+                                                            <h:outputText value="#{p.cliente}"  title="#{p.cliente}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Emissão" >
+                                                            <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}">
+                                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                                            </h:outputText>
+			                                </p:column>
+                                                        
+                                                        <p:column headerText="Validade" >
+                                                              <h:outputText value="#{p.dataValidade}"  title="#{p.dataValidade}">
+                                                              <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                                            </h:outputText>
+			                                </p:column>
+			
+                                                        <p:column headerText="CV Inicial" >
+                                                            <h:outputText value="#{p.dataInicial}"  title="#{p.dataInicial}">
+                                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                                            </h:outputText>
+			                                </p:column>
+                                                        
+                                                        <p:column headerText="CV Final" >
+                                                            <h:outputText value="#{p.dataFinal}"  title="#{p.dataFinal}">
+                                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                                            </h:outputText>
+			                                </p:column>
+                                                        
+                                                        
+                                                        <p:column headerText="Local" >
+                                                            <h:outputText value="#{p.local}"  title="#{p.local}"/>
+			                                </p:column>
+                                                        
+                                                        <p:column headerText="Filial" >
+                                                            <h:outputText value="#{p.filial}"  title="#{p.filial}"/>
+			                                </p:column>
+                                                        
+                                                        <p:column headerText="Notificar" width="8%">
+                                                            <p:commandButton value="Notificar" icon="fa fa-thumbs-o-up Fs18 white"  id="ajax"  action="#{nvAvisosController.buttonAction}" update=":frmLista" ajax="false"/>
+                                                            </p:column>
+                                                        
+                                                        
+			                            </p:dataTable>
+			                        </div>
+                            </p:panelGrid>
+                         </div>   
+                    </h:form>
+
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

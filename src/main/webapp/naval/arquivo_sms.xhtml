@@ -1,0 +1,167 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+            h2{color:black;}
+
+        </style>
+        
+         <f:metadata>
+            <f:viewAction  action="#{nvListaCertificadoController.iniciarsms()}" />
+        </f:metadata>
+        
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid rendered="#{loginController.usuario.acOrgGerArquivo ==1}" columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-4">
+                                <h2 >Arquivos SMS</h2>
+                                <p:fileUpload 
+                                			  fileUploadListener="#{nvListaCertificadoController.handleFileUploadSMS}"
+                                			  update="msg :frmLista"
+                                			  allowTypes="/(\.|\/)(pdf)$/"
+                                			  fileLimit="1"
+                                			  cancelLabel="Cancelar"
+                                			  uploadLabel="Adicionar arquivo"
+                                			  label="Selecionar arquivo"
+                                			  invalidFileMessage="São permitidas documentos no formato PDF"
+                                			  /> 
+								<p:growl id="msg" />                                			  
+                            </p:panelGrid>
+                            <p:messages id="messages"  autoUpdate="true" closable="true" />
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                            	<p:separator/>
+                            	
+                                 <!-- <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3">
+                                     <h:outputText value="Tipo de Arquivo" />
+                                     <p:selectOneMenu filter="true" filterMatchMode="contains" >
+                                         <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                         <f:selectItem value="#{null}" itemLabel="Certificado" itemValue="#{null}" />
+                                         <f:selectItem value="#{null}" itemLabel="Vistoria" itemValue="#{null}" />
+                                     </p:selectOneMenu> 
+                                 </p:panelGrid> -->
+                                 
+                                 <div class="Container100 Responsive100" >
+			                            <p:dataTable id="listaPesquisa" reflow="true" style=""
+                                                                 var="p" value="#{nvListaCertificadoController.listaNvListaCertificadosms}"  
+			                            			emptyMessage="Lista vazia" paginator="true" rows="15"  
+			                            			rowsPerPageTemplate="15,50,100">
+			                                <p:column headerText="ID" >
+			                                    <h:outputText value="#{p.seqNvListaCertificado}"  title="#{p.seqNvListaCertificado}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Nome" >
+			                                	<h:outputText value="#{p.nomeArquivo}"  title="#{p.nomeArquivo}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Tipo" >
+			                                	<h:outputText value="#{p.tipoCertificado}"  title="#{p.tipoCertificado}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Usuário" >
+			                                   <h:outputText value="#{p.usuario}"  title="#{p.usuario}"/>
+			                                </p:column>
+			
+			                                <p:column headerText="Download" >
+				                                <p:commandButton id="downloadLink" icon="fa fa-fw fa-download Fs18 white" 
+						                            ajax="false" actionListener="#{nvListaCertificadoController.download(p)}"
+						                            update="msg :frmLista">
+						                            <p:fileDownload value="#{nvListaCertificadoController.downloadFile}" />
+						                        </p:commandButton>
+			                                </p:column>
+			
+			
+			                                <p:column headerText="Remover" width="8%" rendered="#{loginController.usuario.acOrgGerArquivo ==1}">
+			                                    <p:commandButton id="removeLink" icon="fa fa-fw fa-trash Fs18 white" 
+			                                    	update="msg :frmLista" ajax="false" 
+			                                    	actionListener="#{nvListaCertificadoController.removersms(p)}">
+						                        </p:commandButton>
+			                                </p:column>
+			                            </p:dataTable>
+			                        </div>
+                            </p:panelGrid>
+                         </div>   
+                    </h:form>
+
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

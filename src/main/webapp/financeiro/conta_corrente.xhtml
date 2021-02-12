@@ -1,0 +1,443 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <f:metadata>
+        <f:viewAction  action="#{financeiroController.iniciarContaCorrente()}" />
+    </f:metadata>
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Começo',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                currentText: 'Data Atual',
+                        ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }     
+            h2{color:black;}
+
+
+        </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{financeiroController.tela == 0}"/>
+
+                            <p:panelGrid rendered="#{financeiroController.tela == 0}" columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-0,ui-grid-col-1,ui-grid-col-2">
+                                <h2>Conta Corrente</h2>  
+                                <h:commandLink title="Exportar para Excel">
+                                    <img src="../images/excel.png" alt="Smiley face" height="35" width="35"/>
+                                    <p:dataExporter type="xls" encoding="iso-8859-1" target="listaPesquisa" fileName="Relatorio_Conta_Corrente" pageOnly="false" postProcessor="#{financeiroController.postProcessXLS}"/>
+                                </h:commandLink>
+                                <p:commandButton value="Buscar" actionListener="#{financeiroController.listarContaCorrente()}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Nova Transferência" ajax="false" actionListener="#{financeiroController.novo()}" update=":frmLista :frmDetalhe"  rendered="#{loginController.usuario.acFinContaCorrente == 1}"/>
+                            </p:panelGrid>
+                            <p:separator rendered="#{financeiroController.tela == 0}"/>
+
+                            <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 0}">
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Conta(Origem)"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqContaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaConta}" var="ct"  itemLabel="#{ct.nome}"  itemValue="#{ct.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Operação"/>
+                                    <p:selectOneMenu value="#{financeiroController.operacaoSelecionada}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItem  itemLabel="Crédito" itemValue="CRÉDITO" />
+                                        <f:selectItem  itemLabel="Débito" itemValue="DÉBITO" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Documento Fiscal"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqDocumentoFiscalSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaDocumentoFiscal}" var="df"  itemLabel="#{df.nome}"  itemValue="#{df.seqDocumentoFiscal}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Categoria (Nível II)"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqNaturezaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaTipoLancamento}" var="n"  itemLabel="#{n.nome}"  itemValue="#{n.seqTipoMovimentoFinanceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlFiltroData" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 0}">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Pagamento/Recebimentoxxx" value="#{financeiroController.porDataPagamento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.porDataPagamento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" /> 
+                                            <p:inputMask mask="99/99/9999"    value="#{financeiroController.dataPagamentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{financeiroController.dataPagamentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>  
+                                        <p/>
+                                        <p/>
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Vencimento" value="#{financeiroController.porDataVencimento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.porDataVencimento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{financeiroController.dataVencimentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{financeiroController.dataVencimentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid-->
+                            </p:panelGrid>
+                        </div>
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid columns="4" layout="grid" rendered="#{financeiroController.listaFinanceiro.size() > 0 and financeiroController.tela == 0}">
+                                <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank" >
+                                    <h:outputLabel value="CRÉDITO" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <h:outputText value="R$#{financeiroController.totalCredito}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"  >
+                                    <h:outputLabel value="DÉBITO" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <h:outputText value="R$#{financeiroController.totalDebito}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" rendered="#{financeiroController.seqContaSelecionado == null}" styleClass="ui-panelgrid-blank"  />
+                                <p:panelGrid columns="1" layout="grid" rendered="#{financeiroController.seqContaSelecionado != null}" styleClass="ui-panelgrid-blank" >
+                                    <h:outputLabel value="SALDO INICIAL" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <h:outputText value="R$#{financeiroController.saldoInicial}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" rendered="#{financeiroController.seqContaSelecionado == null}" styleClass="ui-panelgrid-blank" />
+                                <p:panelGrid columns="1" layout="grid" rendered="#{financeiroController.seqContaSelecionado != null}" styleClass="ui-panelgrid-blank" >
+                                    <h:outputLabel value="SALDO" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <h:outputText value="R$#{financeiroController.saldoFinal}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </div>
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="p" value="#{financeiroController.listaFinanceiro}" 
+                                         rendered="#{financeiroController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" 
+                                         paginator="true" rows="15" rowsPerPageTemplate="15,50,100">
+                                <p:columnGroup type="header">
+                                    <p:row>
+                                        <p:column rowspan="2" headerText="Código" width="8%" sortBy="#{p.seqFinanceiro}"/>
+                                        <p:column rowspan="2" headerText="Operação"  sortBy="#{p.operacao}"/>
+                                        <p:column colspan="2" headerText="Contas"  />
+                                        <p:column rowspan="2" headerText="Parceiro"  sortBy="#{p.nomeParceiroDoc}" />
+                                        <p:column rowspan="2" headerText="Categoria II" sortBy="#{p.tipoLancamento}"/>
+                                        <p:column rowspan="2" headerText="Valor Pago/Recebido" sortBy="#{p.valorPagamento}" />
+                                        <p:column rowspan="2" headerText="Data Quitação" sortBy="#{p.dataPagamento}"/>
+                                        <p:column rowspan="2" headerText="Descrição" sortBy="#{p.descricao}"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column headerText="Origem" width="4%" sortBy="#{p.contaOrigem}" />
+                                        <p:column headerText="Destino" width="4%"  sortBy="#{p.contaDestino}" />
+
+                                        <!--p:column headerText="Emissão" width="4%"  sortBy="#{p.dataEmissao}" />
+                                        <p:column headerText="Vencimento" width="4%" sortBy="#{p.dataVencimento}" />
+                                        <p:column headerText="Pagamento/Recebimento"  sortBy="#{p.dataPagamento}" /-->
+                                    </p:row>
+                                </p:columnGroup> 
+                                <p:column headerText="Código" width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+                                <p:column headerText="Operação" style="text-align: center">
+                                    <h:outputText value="#{p.operacao}"  title="#{p.operacao}" />                               
+                                </p:column>
+
+                                <p:column headerText="Conta Origem" style="text-align: center">
+                                    <h:outputText value="#{p.contaOrigem}"  title="#{p.contaOrigem}"/> 
+                                </p:column>
+                                <p:column headerText="Conta Destino" style="text-align: center">
+                                    <h:outputText value="#{p.contaDestino}"  title="#{p.contaDestino}"/> 
+                                </p:column>
+                                <p:column headerText="Parceiro" style="text-align: center">
+                                    <h:outputText value="#{p.nomeParceiroPC}"  title="#{p.nomeParceiroPC}"/> 
+                                </p:column>
+
+                                <p:column headerText="Categoria II" style="text-align: center">
+                                    <h:outputText value="#{p.tipoLancamento}"  title="#{p.tipoLancamento}"/> 
+                                </p:column>
+                                <!--p:column headerText="Valor Previsto" style="text-align: center">
+                                    <h:outputText value="#{p.valor}"  title="#{p.valor}">                               
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column-->
+
+                                <p:column headerText="Valor Pago/Recebido" style="text-align: center">
+                                    <h:outputText value="#{p.valorPagamento}"  title="#{p.valorPagamento}" rendered="#{p.operacao eq 'DÉBITO'}"> 
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                    <h:outputText value="#{p.valorRecebido}"  title="#{p.valorRecebido}" rendered="#{p.operacao eq 'CRÉDITO'}"> 
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <!--p:column headerText="Data Emissão" style="text-align: center">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}">                               
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column  headerText="Data Vencimento" style="text-align: center">
+                                    <h:outputText value="#{p.dataVencimento}"  title="#{p.dataVencimento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column-->
+                                <p:column  headerText="Data Quitação" style="text-align: center">
+                                    <h:outputText value="#{p.dataPagamento}"  title="#{p.dataPagamento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column  headerText="Descrição" style="text-align: center">
+                                    <h:outputText value="#{p.descricao}"  title="#{p.descricao}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="9" style="text-align:right" />
+                                        <!--p:column footerText="#{financeiroController.totalValorBruto}"/>
+                                        <p:column footerText="#{financeiroController.totalValorLiquido}"/>
+                                        <p:column colspan="2" footerText="" /-->                                        
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 1}"> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro eq null}"> 
+                                <h2 class="BigTopic">Conta Corrente</h2>     
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlStatus" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro ne null}"> 
+                                <h2 class="BigTopic">Conta Corrente - nº#{financeiroController.financeiro.seqFinanceiro}</h2>     
+                            </p:panelGrid>
+
+
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Transação" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt"  pattern="dd/MM/yyyy"  value="#{financeiroController.financeiro.dataLancamento}" />                
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Categoria (Nível II)" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqTipoMovimento}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Categoria" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaTipoLancamento}" var="n"  itemLabel="#{n.nome}"  itemValue="#{n.seqTipoMovimentoFinanceiro}"/>
+                                    </p:selectOneMenu>                             
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Conta Origem" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqConta}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Conta Origem" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaConta}" var="ct" itemLabel="#{ct.nome}" itemValue="#{ct.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Conta Destino" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqContaDestino}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Conta Destino" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaConta}" var="ct" itemLabel="#{ct.nome}" itemValue="#{ct.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Documento Fiscal" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqDocumentoFiscal}" filter="true" filterMatchMode="contains"   >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Documento Fiscal" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaDocumentoFiscal}" var="df" itemLabel="#{df.nome}" itemValue="#{df.seqDocumentoFiscal}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Número Documento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:inputText value="#{financeiroController.financeiro.numeroDocFiscal}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Valor " class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:inputText value="#{financeiroController.financeiro.valorPagamento}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p/>
+                            </p:panelGrid>
+
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <h:outputText value="Descrição " class="Fs16 gray FontRalewaySemiBold"/>
+                                <p:inputTextarea counter="desc" counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{financeiroController.financeiro.descricao}"/>
+                                <h:outputText id="desc"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Responsável"/>
+                                    <h:outputText value="#{financeiroController.financeiro.responsavel}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Data de Cadastro"/>
+                                    <h:outputText value="#{financeiroController.financeiro.dataCadastro}">
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText> 
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:separator/>
+
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{financeiroController.tela == 1}"/>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{financeiroController.tela == 1}">
+                                <p:commandButton value="Salvar" actionListener="#{financeiroController.salvar(0,5)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinContaCorrente== 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{financeiroController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{financeiroController.deletar()}" rendered="#{financeiroController.financeiro.seqFinanceiro != null and loginController.usuario.acFinContaCorrente == 1}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,509 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <f:metadata>
+        <f:viewAction  action="#{nvVistoriaController.iniciar()}" />
+    </f:metadata>
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Começo',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                currentText: 'Data Atual',
+                        ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }     
+            h2{color:black;}
+
+
+        </style>
+
+
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                            <p:panelGrid rendered="#{nvVistoriaController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-2,ui-grid-col-2,ui-grid-col-0">
+                                <h2>Vistoria</h2>
+                                <p:commandButton value="Buscar" actionListener="#{nvVistoriaController.filtrar()}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Novo" ajax="false" actionListener="#{nvVistoriaController.novo()}" update=":frmDetalhe :frmLista"  rendered="#{loginController.usuario.acOpVistoria == 1}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid rendered="#{nvVistoriaController.tela == 0}"  columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:separator/>
+                                <p:panelGrid columns="5" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-5,ui-grid-col-5,ui-grid-col-5,ui-grid-col-5,ui-grid-col-5">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Tipo de Vistoria" />
+                                        <p:selectOneMenu value="#{nvVistoriaController.seqTipoVistoriaSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                            <f:selectItems var="tp" value="#{nvVistoriaController.listaNvTipoVistoria}" itemLabel="#{tp.codigo} - #{tp.nome}" itemValue="#{tp.seqNvTipoVistoria}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Status" />
+                                        <p:selectOneMenu value="#{nvVistoriaController.seqStatusSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvVistoriaController.listaNvVistoriaStatus}" var="s"  itemLabel="#{s.nome}" itemValue="#{s.seqNvVistoriaStatus}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Embarcação" />
+                                        <p:selectOneMenu value="#{nvVistoriaController.seqEmbarcacaoSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todas" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvVistoriaController.listaNvEmbarcacao}" var="e"  itemLabel="#{e.nome}" itemValue="#{e.seqNvEmbarcacao}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Colaborador" />
+                                        <p:selectOneMenu value="#{nvVistoriaController.seqColaboradorSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvVistoriaController.listaColaborador}" var="c"  itemLabel="#{c.nome}" itemValue="#{c.seqColaborador}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="UF" />
+                                        <p:selectOneMenu value="#{nvVistoriaController.UFSelecionada}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todas" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvVistoriaController.listaUf}" var="uf"  itemLabel="#{uf.nome}" itemValue="#{uf.nome}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+
+                                <p:panelGrid id="pnlFiltroData" columns="4" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data da Vistoria" value="#{nvVistoriaController.porData}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.porData}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:calendar locale="pt"    pattern="dd/MM/yyyy"  value="#{nvVistoriaController.dataInicial}" required="true" requiredMessage="[DATA DE VALIDADE] é obrigatório!" />
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final" />
+                                                <p:calendar locale="pt"    pattern="dd/MM/yyyy"  value="#{nvVistoriaController.dataFinal}"  required="true" requiredMessage="[DATA DE VALIDADE] é obrigatório!" />
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Prazo" value="#{nvVistoriaController.porPrazo}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.porPrazo}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:calendar locale="pt"    pattern="dd/MM/yyyy"   value="#{nvVistoriaController.prazoInicial}" required="true" requiredMessage="[PRAZO INICIAL] é obrigatório!" />
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final" />
+                                                <p:calendar locale="pt"    pattern="dd/MM/yyyy"  value="#{nvVistoriaController.prazoFinal}"  required="true" requiredMessage="[PRAZO FINAL] é obrigatório!" />
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="p" value="#{nvVistoriaController.listaNvVistoria}" rendered="#{nvVistoriaController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+                                <p:column headerText="Identificação" sortBy="#{p.identificacao}">
+                                    <p:commandLink value="#{p.identificacao}"  title="#{p.identificacao}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Embarcação" sortBy="#{p.embarcacaoNome}">
+                                    <p:commandLink value="#{p.embarcacaoNome}"  title="#{p.embarcacaoNome}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Tipo" sortBy="#{p.tipoVistoria}">
+                                    <p:commandLink value="#{p.tipoVistoria}"  title="#{p.tipoVistoria}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista " />
+                                </p:column>
+
+                                <p:column headerText="UF da Vistoria" sortBy="#{p.estadoVistoria}">
+                                    <p:commandLink value="#{p.estadoVistoria}"  title="#{p.estadoVistoria}"  actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista " />
+                                </p:column>
+
+                                <p:column headerText="Vistoriador" sortBy="#{p.colaboradorNome}">
+                                    <p:commandLink value="#{p.colaboradorNome}"  title="#{p.colaboradorNome}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=" :frmDetalhe :frmLista" />
+                                </p:column>
+
+                                  <p:column headerText="Aprovado Por:" sortBy="#{p.usuario}">
+                                    <p:commandLink value="#{p.usuario}"  title="#{p.usuario}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=" :frmDetalhe :frmLista" />
+                                </p:column> 
+                                
+                                <p:column headerText="Dt. da Vistoria" sortBy="#{p.dataVistoria}">
+                                    <h:outputText value="#{p.dataVistoria}"  title="#{p.dataVistoria}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+                               <!-- <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>-->
+                                <p:column headerText="Situação" sortBy="#{p.situacao}">
+                                    <p:commandLink value="#{p.situacao}"  title="#{p.situacao}" actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{nvVistoriaController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+                            </p:dataTable>
+
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe" enctype="multipart/form-data">
+
+                        <p:panelGrid id="pnlPrincipal" columns="1" layout="grid" styleClass="ui-panelgrid-blank"  rendered="#{nvVistoriaController.tela == 1}"> 
+                           <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                            <p:panelGrid rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria == null}"> 
+                                <h:outputText value="Selecione as Vistorias realizadas" />
+                                <p:separator/>
+                                <p:selectManyCheckbox  layout="grid" columns="2" value="#{nvVistoriaController.tipoVistoriaSelecionada}"  required="true" requiredMessage="Selecione as vistorias realizadas.">
+                                    <f:selectItems  value="#{nvVistoriaController.listaNvTipoVistoria}" var="tipo"  itemLabel="#{tipo.nome}" itemValue="#{tipo.seqNvTipoVistoria}" />
+                                </p:selectManyCheckbox> 
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria != null}"> 
+                                    <h:outputText value="Tipo de Vistoria" />
+                                    <h:outputText value="#{nvVistoriaController.nvVistoria.tipoVistoria}" />
+                                </p:panelGrid>
+
+                                <p:separator/>
+                                
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria != null}"> 
+                                    <h:outputText value="Identificação [Aberto para Cadastro Inicial]" />
+                                    <p:inputText value="#{nvVistoriaController.nvVistoria.identificacao}" />
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria == null}"> 
+                                    <h:outputText value="Identificação [Aberto para Cadastro Inicial]" />
+                                    <p:inputText value="#{nvVistoriaController.nvVistoria.identificacao}" />
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Embarcação" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.seqNvEmbarcacao}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[EMBARCAÇÃO] é obrigatório">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione a Embarcação" itemValue="#{null}" />
+                                        <f:selectItems value="#{nvVistoriaController.listaNvEmbarcacao}" var="emb"  itemLabel="#{emb.nome}" itemValue="#{emb.seqNvEmbarcacao}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Nome do Vistoriador" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.seqColaborador}" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione o Vistoriador" itemValue="#{null}" />
+                                        <f:selectItems var="c" value="#{nvVistoriaController.listaColaborador}" itemLabel="#{c.nome}" itemValue="#{c.seqColaborador}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Status" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.seqNvVistoriaStatus}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[STATUS] é obrigatório">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione o Status" itemValue="#{null}" />
+                                        <f:selectItems value="#{nvVistoriaController.listaNvVistoriaStatus}" var="s"  itemLabel="#{s.nome}" itemValue="#{s.seqNvVistoriaStatus}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                                    
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria != null}"> 
+                                </p:panelGrid>
+                                
+                                </p:panelGrid>
+
+                               <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                               
+                                   <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data da Vistoria" />
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{nvVistoriaController.nvVistoria.dataVistoria}" required="true" requiredMessage="[DATA DA VISTORIA] é obrigatório" />                
+                                    </p:panelGrid>
+                                    
+                                       <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <h:outputText value="Data da Docagem" />
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{nvVistoriaController.nvVistoria.dataDocagem}" required="true" requiredMessage="[DATA DA DOCAGEM] é obrigatório"/>                
+                                    </p:panelGrid>
+                                    
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data Emissão de Laudo" />
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{nvVistoriaController.nvVistoria.dataEmissaoLaudo}" required="true" requiredMessage="[DATA DA DOCAGEM] é obrigatório"/>                
+                                    </p:panelGrid>
+                                    
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                
+                                    <h:outputText value="Transporta Combustível - Regra II.2 do Anexo I da MARPOL" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.transporteCombustivel}" >
+                                        <f:selectItem itemLabel="Não" itemValue="Não" />
+                                        <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                    </p:selectOneMenu>
+                                    
+                                </p:panelGrid>
+                                    
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Cidade da Vistoria" />
+                                    <p:inputText value="#{nvVistoriaController.nvVistoria.cidadeVistoria}" required="true" requiredMessage="Cidade"/>                
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Estado da Vistoria" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.estadoVistoria}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[UNIDADE FEDERATIVA] é obrigatório">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione a UF" itemValue="#{null}" />
+                                        <f:selectItems value="#{nvVistoriaController.listaUf}" var="uf"  itemLabel="#{uf.nome}" itemValue="#{uf.nome}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                               <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Cadastro" />
+                                    <h:outputText value="#{nvVistoriaController.nvVistoria.dataCadastro}" >                
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                    </h:outputText>
+                                </p:panelGrid>
+                                   
+                                   <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Situação" />
+                                    <p:selectOneMenu value="#{nvVistoriaController.nvVistoria.situacao}" >
+                                        <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                        <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                   
+                                   </p:panelGrid>
+                                <p/>
+                            </p:panelGrid>
+
+
+
+                            <!--p:separator/>
+                            <h2 class="BigTopic">Anexos</h2-->
+                            <p:accordionPanel id="apnlUpload" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria != null}">
+                                <p:tab title="Anexos"  >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:growl id="messagesg" showDetail="true" />
+                                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-4,ui-grid-col-4"> 
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:outputLabel value="Tipo de Arquivo"/>
+                                                <p:selectOneMenu value="#{nvVistoriaController.upload.tipoArquivo}" >
+                                                    <f:selectItem itemLabel="Laudo" itemValue="LAUDO" />
+                                                    <f:selectItem itemLabel="RAP" itemValue="RAP" />
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>                            
+                                            <p:fileUpload label="Selecionar Arquivo" value="#{nvVistoriaController.file}" mode="simple" skinSimple="true"/>
+                                            <p:commandButton value="Adicionar" ajax="false" actionListener="#{nvVistoriaController.upload}" rendered="#{loginController.usuario.acOpVistoria == 1}" update=" tblAnexos"/>
+                                        </p:panelGrid>                            
+                                    </p:panelGrid>
+                                    
+                                    <p:dataTable id="tblAnexos" var="a" rowIndexVar="index" value="#{nvVistoriaController.listaUpload}" emptyMessage="Lista vazia" reflow="true">
+                                        <p:column headerText="ID" width="8%" style="text-align: center">
+                                            <p:outputLabel value="#{index+1}"/>
+                                        </p:column>
+                                        <p:column headerText="Nome" style="text-align: center">
+                                            <p:outputLabel value="#{a.nomeArquivo}"/>
+                                        </p:column>
+                                        <p:column headerText="Tipo" style="text-align: center">
+                                            <p:outputLabel value="#{a.tipoArquivo}"/>
+                                        </p:column>
+                                        <p:column headerText="Usuário" style="text-align: center">
+                                            <p:outputLabel value="#{a.nomeUsuario}"/>
+                                        </p:column>
+
+                                        <p:column headerText="Download" width="8%" style="text-align: center" >
+                                            <p:commandButton actionListener="#{nvVistoriaController.download(a)}" onclick="this.form.target = '_blank'" style="width: 50px" ajax="false"  icon="fa fa-arrow-circle-down white">
+                                                <p:fileDownload value="#{nvVistoriaController.fileDownload}" />
+                                            </p:commandButton>
+                                        </p:column>
+                                        <p:column headerText="Remover" width="8%" style="text-align: center">
+                                            <p:commandButton icon="fa fa-eraser white" style="width: 50px" styleClass="RedButton" actionListener="#{nvVistoriaController.removerAnexo(a)}" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria!=0 and loginController.usuario.acOpVistoria == 1}" update=":frmDetalhe :frmLista">
+                                                <p:confirm header="Confirmação" message="Deseja excluir o anexo?" icon="ui-icon-alert" />
+                                            </p:commandButton>
+                                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                                <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                                <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                            </p:confirmDialog> 
+                                            </p:column>
+                                      
+                                        
+                                    </p:dataTable>
+
+                                </p:tab>
+                            </p:accordionPanel>
+                            
+                            
+                            
+                            <!--p:separator/>
+
+                            </p:panelGrid-->
+
+
+                            <p:panelGrid id="pnlEmitir" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria != null}" columns="1"  layout="grid" styleClass="ui-panelgrid-blank" >
+                                <h2 class="BigTopic"> </h2>
+                                <h:outputText value="Selecione o Certificado a ser Emitido" />
+                                <p:selectOneRadio layout="grid" columns="2"  value="#{nvVistoriaController.seqVistoriaSelecionadaEmissaoCertificado}">
+                                    <f:selectItems value="#{nvVistoriaController.listaNvTpVistoriaTpCertificado}" var="tp" itemLabel="#{tp.nomeCertificado}" itemValue="#{tp.seqNvTipoCertificado}"/>
+                                </p:selectOneRadio>
+
+                                <p:panelGrid   columns="1"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-1"> 
+                                    <p:commandButton value="Emitir"  actionListener="#{nvVistoriaController.emitirCertificado()}" rendered="#{nvVistoriaController.nvVistoria.aprovador != null}" ajax="true" onclick="this.form.target = '_blank'"/>
+                                    <p:commandButton value="Aprovar Docs" styleClass="GreenButton" actionListener="#{nvVistoriaController.aprovar(1)}" rendered="#{loginController.usuario.acAprovaVistoria == 1}" disabled="#{nvVistoriaController.nvVistoria.aprovador != null}"/>
+                                </p:panelGrid>
+
+                            </p:panelGrid>                          
+
+                            <h2 class="BigTopic"> </h2>
+                            <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                            <p:panelGrid   columns="3"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0">
+                                <!--p:commandButton value="Salvar" actionListener="#{nvVistoriaController.salvar(1)}" ajax="false" update=":frmDetalhe :frmLista frmDetalhe:apnlUpload frmDetalhe:pnlEmitir" rendered="#{loginController.usuario.acOpVistoria == 1}"/-->
+                                <p:commandButton value="Salvar" actionListener="#{nvVistoriaController.salvar(1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acOpVistoria == 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{nvVistoriaController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{nvVistoriaController.deletar()}" rendered="#{nvVistoriaController.nvVistoria.seqNvVistoria!=0 and loginController.usuario.acOpVistoria == 1}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                    <!--h:form enctype="multipart/form-data">
+                        <p:growl id="messages" showDetail="true" />
+
+                        <p:fileUpload value="#{uploadController.file}" mode="simple" skinSimple="true"/>
+
+                        <p:commandButton value="Submit" ajax="false" actionListener="#{uploadController.upload}" update="messages"/>
+                    </h:form-->
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

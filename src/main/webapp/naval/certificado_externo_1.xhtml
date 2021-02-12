@@ -1,0 +1,521 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+            h2{color:black;}
+
+        </style>
+
+        <f:metadata>
+            <f:viewParam name="id"  value="#{nvCertificadoController.idCertificado}" />
+            <f:viewParam name="chave"  value="#{nvCertificadoController.chaveExterno}" />
+            <f:viewAction  action="#{nvCertificadoController.iniciarExterno()}" />
+        </f:metadata>
+
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid rendered="#{nvCertificadoController.tela == 0}" columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-2,ui-grid-col-2,ui-grid-col-0">
+                                <h2 >Certificados</h2>
+                                <p:commandButton value="Buscar" actionListener="#{nvCertificadoController.filtrar()}" update=":frmDetalhe :frmLista" />
+                            </p:panelGrid>
+                            <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                            <p:panelGrid rendered="#{nvCertificadoController.tela == 0}"  columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:separator/>
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Tipo de Certificado" />
+                                        <p:selectOneMenu value="#{nvCertificadoController.seqTipoCertificadoSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvCertificadoController.listaNvTipoCertificado}" var="tp"  itemLabel="#{tp.nome}" itemValue="#{tp.seqNvTipoCertificado}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Embarcação" />
+                                        <p:selectOneMenu value="#{nvCertificadoController.seqEmbarcacaoSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem  itemLabel="Todas" itemValue="#{null}" />
+                                            <f:selectItems value="#{nvCertificadoController.listaNvEmbarcacao}" var="e"  itemLabel="#{e.nome}" itemValue="#{e.seqNvEmbarcacao}" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Status da Convalidação" />
+                                        <p:selectOneMenu value="#{nvCertificadoController.statusConvalidacaoSelecionado}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem itemLabel="Todos" itemValue="Todos" />
+                                            <f:selectItem itemLabel="Com pendência" itemValue="Com pendência" />
+                                            <f:selectItem itemLabel="Sem pendência" itemValue="Sem pendência" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                                <p:panelGrid id="pnlFiltroData" columns="5" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data de Validade" value="#{nvCertificadoController.porDataValidade}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvCertificadoController.porDataValidade}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:inputMask mask="99/99/9999"    value="#{nvCertificadoController.dataValidadeInicial}" required="true" requiredMessage="[DATA DE VALIDADE] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final" />
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataValidadeFinal}"  required="true" requiredMessage="[DATA DE VALIDADE] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data de Emissão" value="#{nvCertificadoController.porDataEmissao}" >
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvCertificadoController.porDataEmissao}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataEmissaoInicial}"  required="true" requiredMessage="[DATA DE EMISSÃO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final" />
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataEmissaoFinal}"  required="true" requiredMessage="[DATA DE EMISSÃO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>                                    
+
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data de Cadastro" value="#{nvCertificadoController.porDataCadastro}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvCertificadoController.porDataCadastro}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataCadastroInicial}"  required="true" requiredMessage="[DATA DE CADASTRO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final" />
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataCadastroFinal}"  required="true" requiredMessage="[DATA DE CADASTRO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>
+
+
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data de Convalidação" value="#{nvCertificadoController.porDataConvalidacao}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvCertificadoController.porDataConvalidacao}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:inputMask mask="99/99/9999"    value="#{nvCertificadoController.dataConvalidacaoInicial}" required="true" requiredMessage="[DATA DE CONVALIDAÇÃO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final"/>
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataConvalidacaoFinal}"  required="true" requiredMessage="[DATA DE CONVALIDAÇÃO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:selectBooleanCheckbox  itemLabel="Informar Data de Prazo da Convalidação" value="#{nvCertificadoController.porDataConvalidacaoPrazo}">
+                                            <p:ajax event="change" update="pnlFiltroData"/>
+                                        </p:selectBooleanCheckbox>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{nvCertificadoController.porDataConvalidacaoPrazo}">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Inicial" />
+                                                <p:inputMask mask="99/99/9999"    value="#{nvCertificadoController.dataConvalidacaoPrazoInicial}" required="true" requiredMessage="[DATA DO PRAZO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                                <h:outputText value="Data Final"/>
+                                                <p:inputMask mask="99/99/9999"   value="#{nvCertificadoController.dataConvalidacaoPrazoFinal}"  required="true" requiredMessage="[DATA DO PRAZO] é obrigatório!" >
+                                                </p:inputMask>
+                                            </p:panelGrid>                                
+                                        </p:panelGrid>                                
+
+                                    </p:panelGrid>                                    
+
+
+                                </p:panelGrid>
+
+
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="p" value="#{nvCertificadoController.listaNvCertificado}" rendered="#{nvCertificadoController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+                                <p:column headerText="Identificação" sortBy="#{p.identificacao}">
+                                    <p:commandLink value="#{p.identificacao}"  title="#{p.identificacao}"  actionListener="#{nvCertificadoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Embarcação" sortBy="#{p.embarcacaoNome}">
+                                    <p:commandLink value="#{p.embarcacaoNome}"  title="#{p.embarcacaoNome}"  actionListener="#{nvCertificadoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Dt. Validade" sortBy="#{p.dataValidade}">
+                                    <h:outputText value="#{p.dataValidade}"  title="#{p.dataValidade}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Dt. Emissao" sortBy="#{p.dataEmissao}">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                    </h:outputText>
+                                </p:column>
+
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{nvCertificadoController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+                        <p:panelGrid  rendered="#{nvCertificadoController.tela == 1}"  columns="6"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-2,ui-grid-col-2,ui-grid-col-0">
+                            <h2>#{nvCertificadoController.nvCertificado.embarcacaoNome}</h2>
+
+                            <p:commandButton value="Salvar" actionListener="#{nvCertificadoController.salvar(1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acOpCertificado == 1}"/>
+                            <p:commandButton value="Voltar" immediate="true" actionListener="#{nvCertificadoController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                            <p:commandButton value="Imprimir" actionListener="#{nvCertificadoController.imprimir()}" immediate="true" ajax="false"  onclick="this.form.target = '_blank'"/>
+
+
+                            <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{nvCertificadoController.deletar()}" rendered="#{nvCertificadoController.nvCertificado.seqNvCertificado!=0 and loginController.usuario.acOpCertificado == 1}" update=":frmDetalhe :frmLista">
+                                <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                            </p:commandButton>
+
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                            </p:confirmDialog>                                                              
+
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <p:panelGrid columns="1" rendered="#{nvCertificadoController.tela == 1}" layout="grid" styleClass="ui-panelgrid-blank" > 
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Tipo de Certificado: " />
+                                    <h:outputText value="#{nvCertificadoController.nvCertificado.tipoCertificado}" />
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Embarcação: " />
+                                    <h:outputText value="#{nvCertificadoController.nvCertificado.embarcacaoNome}" />
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data da Docagem: " />
+                                    <h:outputText value="#{nvCertificadoController.nvVistoria.dataDocagem}" >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+
+                                    <h:outputText value="Data de Validade: " />
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <h:outputText value="#{nvCertificadoController.nvCertificado.dataValidade}" >
+                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" locale="pt_BR"  />
+                                        </h:outputText>
+                                    </p:panelGrid>    
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Cadastro: " />
+                                    <h:outputText value="#{nvCertificadoController.nvCertificado.dataCadastro}">
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+
+                            <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-5" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Identificação [Cadastro Inicial]"/>
+                                        <p:inputText value="#{nvCertificadoController.nvCertificado.identificacao}" required="true" requiredMessage="Identificação"/>
+                                    </p:panelGrid>                                    
+    <!--p:inputMask value="#{nvCertificadoController.nvCertificado.identificacao}" mask="AWS 99999/2099" rendered="#{nvLicencaController.nvLicenca.seqNvTipoLicenca eq '19'}" required="true" requiredMessage="Identificação é obrigatória!"/-->
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Filial"/>
+                                        <p:selectOneMenu value="#{nvCertificadoController.nvCertificado.filial}" >
+                                            <f:selectItem itemLabel="RJ" itemValue="#{null}" />
+                                            <f:selectItem itemLabel="PA" itemValue="(PA)" />
+                                            <f:selectItem itemLabel="AM" itemValue="(AM)" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Emissão" />
+                                    <p:calendar mask="99/99/9999" pattern="dd/MM/yyyy" value="#{nvCertificadoController.nvCertificado.dataEmissao}" />                 
+
+<!--p:inputMask mask="99/99/9999" value="#{nvCertificadoController.nvCertificado.dataEmissao}" >                
+ <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+</p:inputMask-->
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Local Emissão" />
+                                    <p:inputText value="#{nvCertificadoController.nvCertificado.localEmissao}" required="true" requiredMessage="Local de emissão é obrigatório!"/>                 
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Situação" />
+                                    <p:selectOneMenu value="#{nvCertificadoController.nvCertificado.situacao}" >
+                                        <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                        <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank">    
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Status do Certificado:"/>
+                                    <h:outputText value="#{nvCertificadoController.nvCertificado.status}"/>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Prazo (Número de dias). Disponível #{nvCertificadoController.limitePrazo} dias."/>
+                                    <p:inputText  value="#{nvCertificadoController.nvCertificado.prazo}" required="true" requiredMessage="Prazo do certificado é obrigatório!"/>
+                                </p:panelGrid>
+
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Assinatura Digital"/>
+                                    <p:inputText value="#{nvCertificadoController.nvCertificado.assinaturaDigital}"/>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Colaborador Responsável pela Assinatura" style="font-size: 90%;"/>
+                                    <p:selectOneMenu value="#{nvCertificadoController.nvCertificado.seqColaborador}" filter="true" filterMatchMode="contains" required="true" requiredMessage="Escolha um parceiro para Assinatura!">
+                                        <f:selectItem value="#{null}" itemLabel="Selecionar" itemValue="#{null}" />
+                                        <f:selectItems value="#{nvCertificadoController.listaColaborador}" var="tp"  itemLabel="#{tp.nome}" itemValue="#{tp.seqColaborador}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <h:outputText value="Observação" />
+                                <p:editor controls="" value="#{nvCertificadoController.nvCertificado.observacao}" />                
+                            </p:panelGrid>
+
+                            <p:accordionPanel  rendered="#{nvCertificadoController.nvCertificado.seqNvCertificado != null}">
+                                <p:tab title="Convalidações">
+                                    <p:dataTable var="pr" value="#{nvCertificadoController.listaNvCertificadoDetalhe}" editable="true" reflow="true" >
+                                        <p:column headerText="A REALIZAR" sortBy="#{pr.arealiza}">
+                                            <p:outputLabel value="#{pr.arealiza}"/>
+                                        </p:column>
+
+                                        <p:column headerText="ENTRE" sortBy="#{pr.dataInicial}" >
+                                            <h:outputLabel value="#{pr.dataInicial}"  title="#{pr.dataInicial}"  rendered="#{pr.dataInicial ne pr.dataFinal}">
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" />
+                                            </h:outputLabel>
+                                            <h:outputLabel value="xxxx" title="xxxx" rendered="#{pr.dataInicial eq pr.dataFinal}"/>
+                                        </p:column>
+
+                                        <p:column headerText="E" sortBy="#{pr.dataFinal}" >
+                                            <h:outputLabel value="#{pr.dataFinal}"  title="#{pr.dataFinal}" rendered="#{pr.dataInicial ne pr.dataFinal}">
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" />
+                                            </h:outputLabel>
+                                            <h:outputLabel value="xxxx" title="xxxx" rendered="#{pr.dataInicial eq pr.dataFinal}"/>
+                                        </p:column>
+
+                                        <p:column headerText="LUGAR DA REALIZAÇÃO" sortBy="#{pr.lugar}">
+                                            <p:outputLabel value="#{pr.lugar}"  />
+                                        </p:column>
+
+                                        <p:column headerText="DATA REALIZAÇÃO" sortBy="#{pr.dataRealizacao}">
+                                            <p:outputLabel value="#{pr.dataRealizacao}"  title="#{pr.dataRealizacao}"  >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                            </p:outputLabel>
+                                        </p:column>
+
+                                        <p:column headerText="VISTORIADOR" sortBy="#{pr.nomeVistoriador}">
+                                            <p:outputLabel value="#{pr.nomeVistoriador}"  title="#{pr.nomeVistoriador}"/>
+                                        </p:column>
+
+                                        <p:column headerText="DOCUMENTO" sortBy="#{pr.documentoVistoriador}">
+                                            <p:outputLabel value="#{pr.documentoVistoriador}"  title="#{pr.documentoVistoriador}"/>
+                                        </p:column>
+
+                                        <p:column headerText="Detalhe" width="8%">
+                                            <p:commandButton icon="fa fa-search Fs18 white"    actionListener="#{nvCertificadoController.selecionarDetalhe(pr)}" update=":frmDetalhe" />
+                                        </p:column>
+
+                                    </p:dataTable>     
+
+                                    <p:separator/>
+
+                                    <p:panelGrid columns="7" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acOpCertificado == 1}" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="A REALIZAR" style="font-size: 90%"/>
+                                            <h:outputText value="#{nvCertificadoController.nvCertificadoDetalhe.arealiza}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="ENTRE" style="font-size: 90%"/>
+                                            <h:outputText value="#{nvCertificadoController.nvCertificadoDetalhe.dataInicial}" >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                            </h:outputText >
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="E" style="font-size: 90%"/>
+                                            <h:outputText value="#{nvCertificadoController.nvCertificadoDetalhe.dataFinal}" >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                            </h:outputText>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="LOCAL DA REALIZAÇÃO" style="font-size: 90%"/>
+                                            <p:inputText value="#{nvCertificadoController.nvCertificadoDetalhe.lugar}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                            <h:outputText value="DATA REALIZAÇÃO" style="font-size: 90%"/>
+                                            <p:inputMask mask="99/99/9999" value="#{nvCertificadoController.nvCertificadoDetalhe.dataRealizacao}" >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="VISTORIADOR" style="font-size: 90%"/>
+                                            <p:inputText value="#{nvCertificadoController.nvCertificadoDetalhe.nomeVistoriador}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="DOCUMENTO" style="font-size: 90%"/>
+                                            <p:inputText value="#{nvCertificadoController.nvCertificadoDetalhe.documentoVistoriador}" />
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid  columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acOpCertificado == 1}" > 
+                                        <p:commandButton  value="Salvar" actionListener="#{nvCertificadoController.salvarDetalhe()}" update=":frmDetalhe" />
+                                        <!--p:commandButton value="Novo" actionListener="#{nvCertificadoController.novoDetalhe()}" update=":frmDetalhe"/-->
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"   actionListener="#{nvCertificadoController.deletearDetalhe()}" immediate="true" update=":frmDetalhe" styleClass="RedButton" rendered="#{nvCertificadoController.nvCertificadoDetalhe.seqNvCertificadoDetalhe != null}">
+                                            <p:confirm header="Confirmação" message="Deseja excluir o Vínculo?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+
+                                        <p:panelGrid rendered="#{nvCertificadoController.nvCertificadoDetalhe.seqNvCertificadoDetalhe == null}"/>
+
+                                    </p:panelGrid>                                    
+
+                                </p:tab>
+                            </p:accordionPanel>
+                        </p:panelGrid>
+
+                    </h:form>
+
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

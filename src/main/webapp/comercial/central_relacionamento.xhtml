@@ -1,0 +1,252 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+        </style>
+
+        <f:metadata>
+            <f:viewAction  action="#{centralRelacionamentoController.iniciar()}" />
+        </f:metadata>
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <h2 class="BigTopic">Central de Relacionamento</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <h:form id="frmPrincipal" >
+
+                        <div class="Container100 Responsive100" >
+                            <p:tabView >
+                                <p:tab title="Minha Carteira">
+                                    <p:dataTable tableStyle="width:auto"  resizableColumns="true"  var="lst" value="#{centralRelacionamentoController.minhaCarteira}" reflow="true" style="" emptyMessage="Lista vazia">
+                                        <p:column  headerText="Tipo de Parceiro" sortBy="#{lst.tipoParceiro}">
+                                            <p:commandLink value="#{lst.tipoParceiro}"  title="#{lst.tipoParceiro}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Empresa" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.cliente}"  title="#{lst.cliente}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Documento" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.clienteDocumento}"  title="#{lst.clienteDocumento}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Fantasia" sortBy="#{lst.clienteFantasia}">
+                                            <p:commandLink value="#{lst.clienteFantasia}"  title="#{lst.clienteFantasia}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Logradouro" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.clienteLogradouro} - #{lst.clienteNumero} - #{lst.clienteComplemento}"  title="#{lst.clienteLogradouro }"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Bairro" sortBy="#{lst.clienteBairro}">
+                                            <p:commandLink value="#{lst.clienteBairro}"  title="#{lst.clienteBairro}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="UF" sortBy="#{lst.clienteUf}">
+                                            <p:commandLink value="#{lst.clienteUf}"  title="#{lst.clienteUf}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="CEP" sortBy="#{lst.clienteCep}">
+                                            <p:commandLink value="#{lst.clienteCep}"  title="#{lst.clienteCep}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone1}">
+                                            <p:commandLink value="#{lst.clienteTelefone1}"  title="#{lst.clienteTelefone1}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone2}">
+                                            <p:commandLink value="#{lst.clienteTelefone2}"  title="#{lst.clienteTelefone2}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone3}">
+                                            <p:commandLink value="#{lst.clienteTelefone3}"  title="#{lst.clienteTelefone3}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone4}">
+                                            <p:commandLink value="#{lst.clienteTelefone4}"  title="#{lst.clienteTelefone4}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Email" sortBy="#{lst.clienteEmail}">
+                                            <p:commandLink value="#{lst.clienteEmail}"  title="#{lst.clienteEmail}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Pessoa de Contato" sortBy="#{lst.clientePessoaContato}">
+                                            <p:commandLink value="#{lst.clientePessoaContato}"  title="#{lst.clientePessoaContato}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Dt. Cadastro" sortBy="#{lst.clienteDataCadastro}">
+                                            <h:outputText value="#{p.clienteDataCadastro}"  title="#{p.clienteDataCadastro}"  >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                            </h:outputText>
+                                        </p:column>
+
+
+                                        <p:column headerText="Detalhe" width="8%">
+                                            <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+                                <p:tab title="Minha Rede">
+                                    <p:dataTable tableStyle="width:auto"  resizableColumns="true"  var="lst" value="#{centralRelacionamentoController.minhaRede}" reflow="true" style="" emptyMessage="Lista vazia">
+                                        <p:column  headerText="Nível" sortBy="#{lst.nivel}">
+                                            <p:commandLink value="#{lst.nivel}"  title="#{lst.nivel}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column  headerText="Vendedor" sortBy="#{lst.vendedor}">
+                                            <p:commandLink value="#{lst.vendedor}"  title="#{lst.vendedor}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column  headerText="Tipo de Parceiro" sortBy="#{lst.tipoParceiro}">
+                                            <p:commandLink value="#{lst.tipoParceiro}"  title="#{lst.tipoParceiro}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Empresa" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.cliente}"  title="#{lst.cliente}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Documento" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.clienteDocumento}"  title="#{lst.clienteDocumento}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Fantasia" sortBy="#{lst.clienteFantasia}">
+                                            <p:commandLink value="#{lst.clienteFantasia}"  title="#{lst.clienteFantasia}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Logradouro" sortBy="#{lst.cliente}">
+                                            <p:commandLink value="#{lst.clienteLogradouro} - #{lst.clienteNumero} - #{lst.clienteComplemento}"  title="#{lst.clienteLogradouro }"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Bairro" sortBy="#{lst.clienteBairro}">
+                                            <p:commandLink value="#{lst.clienteBairro}"  title="#{lst.clienteBairro}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="UF" sortBy="#{lst.clienteUf}">
+                                            <p:commandLink value="#{lst.clienteUf}"  title="#{lst.clienteUf}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="CEP" sortBy="#{lst.clienteCep}">
+                                            <p:commandLink value="#{lst.clienteCep}"  title="#{lst.clienteCep}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone1}">
+                                            <p:commandLink value="#{lst.clienteTelefone1}"  title="#{lst.clienteTelefone1}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone2}">
+                                            <p:commandLink value="#{lst.clienteTelefone2}"  title="#{lst.clienteTelefone2}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone3}">
+                                            <p:commandLink value="#{lst.clienteTelefone3}"  title="#{lst.clienteTelefone3}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Telefone" sortBy="#{lst.clienteTelefone4}">
+                                            <p:commandLink value="#{lst.clienteTelefone4}"  title="#{lst.clienteTelefone4}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Email" sortBy="#{lst.clienteEmail}">
+                                            <p:commandLink value="#{lst.clienteEmail}"  title="#{lst.clienteEmail}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Pessoa de Contato" sortBy="#{lst.clientePessoaContato}">
+                                            <p:commandLink value="#{lst.clientePessoaContato}"  title="#{lst.clientePessoaContato}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Cidade" sortBy="#{lst.clienteCidade}">
+                                            <p:commandLink value="#{lst.clienteCidade}"  title="#{lst.clienteCidade}"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal" />
+                                        </p:column>
+
+                                        <p:column headerText="Dt. Cadastro" sortBy="#{lst.clienteDataCadastro}">
+                                            <h:outputText value="#{p.clienteDataCadastro}"  title="#{p.clienteDataCadastro}"  >
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                            </h:outputText>
+                                        </p:column>
+
+
+                                        <p:column headerText="Detalhe" width="8%">
+                                            <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{centralRelacionamentoController.selecionar(lst)}"  update=":frmPrincipal"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+
+
+                            </p:tabView>
+
+                        </div>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

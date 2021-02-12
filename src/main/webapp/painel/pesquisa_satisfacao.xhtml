@@ -1,0 +1,261 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+        </style>
+        <f:metadata>
+            <f:viewAction  action="#{pesquisaSatisfacaoController.iniciar()}" />
+        </f:metadata>
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+
+                    <h:form id="frmPrincipal" >
+                        <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-2">
+                            <h2>Painel de Pesquisa de Satisfação de Clientes</h2>
+                            <p:commandButton value="Filtrar" actionListener="#{pesquisaSatisfacaoController.listar()}" update=":frmPrincipal"/>
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"  >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Parceiro"/>
+                                <p:selectOneMenu value="#{pesquisaSatisfacaoController.seqParceiroSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{pesquisaSatisfacaoController.listaParceiro}" var="pa"  itemLabel="#{pa.nome}"  itemValue="#{pa.seqParceiro}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Código"/>
+                                <p:inputText value="#{pesquisaSatisfacaoController.codigoSelecionado}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid id="pnlFiltroData" columns="2" layout="grid" styleClass="ui-panelgrid-blank" >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:selectBooleanCheckbox  itemLabel="Informar Data Cadastro" value="#{pesquisaSatisfacaoController.porDataCadastro}">
+                                    <p:ajax event="change" update="pnlFiltroData"/>
+                                </p:selectBooleanCheckbox>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{pesquisaSatisfacaoController.porDataCadastro}">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Data Inicial" />
+                                        <p:inputMask mask="99/99/9999"    value="#{pesquisaSatisfacaoController.dataCadastroInicial}" required="true" requiredMessage="[DATA DE CADASTRO INICIAL] é obrigatório!" >
+                                        </p:inputMask>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <h:outputText value="Data Final" />
+                                        <p:inputMask mask="99/99/9999"   value="#{pesquisaSatisfacaoController.dataCadastroFinal}"  required="true" requiredMessage="[DATA DE CADASTRO FINAL] é obrigatório!" >
+                                        </p:inputMask>
+                                    </p:panelGrid>                                
+                                </p:panelGrid>                                
+                            </p:panelGrid>                                
+
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <p:panelGrid columns="1" layout="grid" >
+                            <h:outputText style="font-weight: bold" value="Média das Avaliações"/>
+                            <p:panelGrid columns="11" layout="grid" styleClass="ui-panelgrid-blank" style="text-align: center" columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3">
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 1"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP1}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 2"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP2}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 3"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP3}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 4"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP4}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 5"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP5}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Pergunta 6"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP6}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Pergunta 7"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP7}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" >
+                                    <p:outputLabel value="Pergunta 8"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP8}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Pergunta 9"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP9}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Pergunta 10"/>
+                                    <h:outputText  style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP10}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Pergunta 11"/>
+                                    <h:outputText style="font-weight: bold" value="#{pesquisaSatisfacaoController.mediaP11}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <p:dataTable var="d" value="#{pesquisaSatisfacaoController.listaPesquisaSatisfacao}" emptyMessage="Lista Vazia">
+                            <p:columnGroup type="header">
+                                <p:row>
+                                    <p:column rowspan="2" headerText="Código Doc." width="8%" />
+                                    <p:column rowspan="2" headerText="Tipo Documento" width="10%"/>
+                                    <p:column colspan="11" headerText="Avaliação da Pergunta"/>
+                                    <p:column rowspan="2" headerText="Detalhe" width="5%"/>
+                                </p:row>
+                                <p:row>
+                                    <p:column headerText="1" />
+                                    <p:column headerText="2" />
+                                    <p:column headerText="3" />
+                                    <p:column headerText="4" />
+                                    <p:column headerText="5" />
+                                    <p:column headerText="6" />
+                                    <p:column headerText="7" />
+                                    <p:column headerText="8" />
+                                    <p:column headerText="9" />
+                                    <p:column headerText="10"/>
+                                    <p:column headerText="11"/>
+                                </p:row>
+                            </p:columnGroup>
+                            <p:column headerText="Código Doc."  style="text-align: center" >
+                                <p:outputLabel value="#{d.codigoDocumento}"/>
+                            </p:column>                    
+                            <p:column headerText="Tipo Documento"  style="text-align: center" >
+                                <p:outputLabel value="#{d.tipoDocumento}"/>
+                            </p:column>                    
+                            <p:column headerText="Pergunta 1"  style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaUm}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 2"  style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaDois}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 3" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaTres}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 4"  style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaQuatro}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 5" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaCinco}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 6" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaSeis}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 7" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaSete}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 8" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaOito}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 9" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaNove}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 10" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaDez}"/>
+                            </p:column>
+                            <p:column headerText="Pergunta 11" style="text-align: center" >
+                                <p:outputLabel value="#{d.perguntaOnze}"/>
+                            </p:column>
+                            <p:column headerText="Detalhe" width="8%">
+                                <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{pesquisaSatisfacaoController.selecionar(d)}" ajax="false" />
+                            </p:column>
+                        </p:dataTable>
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

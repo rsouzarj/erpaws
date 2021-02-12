@@ -1,0 +1,204 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+        </style>
+
+
+    </ui:define>
+ <f:metadata>
+     <f:viewAction  action="#{loginController.iniciarParametro()}" />
+        </f:metadata>
+    <ui:define name="content">
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <h2 class="BigTopic">Parâmetro</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <h:form id="frmPrincipal">
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                            <p:tabView >
+                                <p:tab title="Pessoais">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"  >
+                                            <h:outputText value="Razão Social" />
+                                            <p:inputText value="#{loginController.empresa.razaoSocial}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Fantasia" />
+                                            <p:inputText value="#{loginController.empresa.fantasia}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="CNPJ" />
+                                            <p:inputText value="#{loginController.empresa.cnpj}" />
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="CEP" />
+                                            <p:inputText value="#{loginController.empresa.cep}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Logradouro" />
+                                            <p:inputText value="#{loginController.empresa.logradouro}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Complemento" />
+                                            <p:inputText value="#{loginController.empresa.complemento}" />
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Bairro" />
+                                            <p:inputText value="#{loginController.empresa.bairro}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Cidade" />
+                                            <p:inputText value="#{loginController.empresa.cidade}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="UF" />
+                                            <p:inputText value="#{loginController.empresa.uf}" />
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Telefone 1" />
+                                            <p:inputText value="#{loginController.empresa.telefone}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Email" />
+                                            <p:inputText value="#{loginController.empresa.email}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <p:panelGrid> 
+                                                <h:outputText value="Email de Integração" />
+                                                <p:inputText value="#{loginController.empresa.email}" readonly="true"/>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acOrgParametro == 1}">
+
+                                        <p:graphicImage value="#{loginController.logo}" library="spark-layout" styleClass="MarAuto MarTop20 MarBot10"/>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3" >                                  
+                                            <p:commandButton value="Mudar Imagem"  onclick="PF('imagemanexo').show()"  />
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>                            
+                                </p:tab>
+
+                                <p:tab title="Cadastros">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"  >
+                                        <h:outputText value="Tipo de Auto Numeração do Parceiro" />
+                                        <p:selectOneMenu value="#{loginController.empresa.tipoNumeracaoCodParceiro}" >
+                                            <f:selectItem itemLabel="Desabilitado" itemValue="#{null}" />
+                                            <f:selectItem itemLabel="Sequencial" itemValue="Sequencial" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"  >
+                                        <h:outputText value="Prox. Código do Parceiro" />
+                                        <p:inputText value="#{loginController.empresa.proximoCodigoParceiro}" readonly="true"/>
+                                    </p:panelGrid>
+                                </p:tab>
+
+                            </p:tabView>
+                        </p:panelGrid>                            
+
+
+                        <h2 class="BigTopic"> </h2>
+
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0">
+                            <p:commandButton value="Salvar" actionListener="#{loginController.salvarParametro()}" update=":frmPrincipal" rendered="#{loginController.usuario.acOrgParametro == 1}"/>
+                            <p:commandButton value="Voltar" immediate="true" actionListener="#{loginController.mudarPagina('/principal/principal.jsf')}"  />
+                        </p:panelGrid>
+
+
+                    </h:form>
+
+                    <p:dialog header="Modificar Imagem" widgetVar="imagemanexo" id="imagemanexo"   appendTo="@(body)" modal="true" showEffect="clip" hideEffect="clip" >
+
+                        <h:form enctype="multipart/form-data"  id="formDocumento">
+                            <h:panelGrid columns="3">
+                                <p:fileUpload fileUploadListener="#{loginController.upload}" 
+                                              sizeLimit="2097152"  cancelLabel="Cancelar" uploadLabel="Enviar Arquivos"
+                                              allowTypes="/(\.|\/)(gif|jpeg|png)$/" invalidFileMessage="Arquivo inválido" 
+                                              label="Selecionar Arquivo" invalidSizeMessage="Arquivo muito grande.Tamanho limite 2 MB's"    oncomplete="PF('imagemanexo').hide(); " 
+                                              fileLimit="1" fileLimitMessage="Só é permitido inserir uma imagem." update="@all" >
+
+                                </p:fileUpload>
+                            </h:panelGrid>
+
+
+                        </h:form>
+                    </p:dialog>
+
+
+                </div>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,578 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <f:metadata>
+        <f:viewAction action="#{RLBMController.iniciar()}" />
+    </f:metadata>
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Começo',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                currentText: 'Data Atual',
+                        ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }     
+            h2{color:black;}
+
+
+        </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{RLBMController.tela == 0}"/>
+
+                            <p:panelGrid rendered="#{RLBMController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-2,ui-grid-col-2">
+                                <h2>Recibo de Locação de Bens Móveis</h2> 
+                                <!--h:commandLink title="Exportar Excel">
+                                    <img src="../images/excel.png" alt="Smiley face" height="35" width="35"/>
+                                    <p:dataExporter type="xls" encoding="iso-8859-1" target="listaPesquisa" fileName="Relatorio" pageOnly="false" postProcessor="#{RLBMController.postProcessXLS}"/>
+                                </h:commandLink-->
+                                <p:commandButton value="Buscar" actionListener="#{RLBMController.listar()}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Novo" ajax="false" actionListener="#{RLBMController.novo()}" update=":frmDetalhe :frmLista"  rendered="#{loginController.usuario.acFinRLBM == 1}"/>
+                            </p:panelGrid>
+                            <!--p:separator rendered="#{RLBMController.tela == 0}"/-->
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.tela == 0}">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Parceiro"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqParceiroSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaParceiro}" var="p"  itemLabel="#{p.nome} - #{p.tipoParceiro}"  itemValue="#{p.seqParceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Conta"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqContaSelecionada}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaConta}" var="c"  itemLabel="#{c.nome}"  itemValue="#{c.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Centro de Custo"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqCentroCustoSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaCentroCusto}" var="cs"  itemLabel="#{cs.nome}"  itemValue="#{cs.seqCentroCusto}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Documento Fiscal"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqDocumentoFiscalSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaDocumentoFiscal}" var="df"  itemLabel="#{df.nome}"  itemValue="#{df.seqDocumentoFiscal}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Status"/>
+                                    <p:selectOneMenu value="#{RLBMController.statusSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItem itemLabel="A VENCER" itemValue="A VENCER" />
+                                        <f:selectItem itemLabel="VENCIDO" itemValue="VENCIDO" />
+                                        <f:selectItem itemLabel="STANDY-BY" itemValue="STANDY-BY" />
+                                        <f:selectItem itemLabel="CANCELADO" itemValue="CANCELADO" />
+                                        <f:selectItem itemLabel="QUITADO" itemValue="QUITADO" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Local Financeiro"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqContaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaConta}" var="ct"  itemLabel="#{ct.banco}"  itemValue="#{ct.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Categoria (Nível I)"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqCategoriaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaFinanceiroCategoria}" var="fc"  itemLabel="#{fc.nome}"  itemValue="#{fc.seqFinanceiroCategoria}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Categoria (Nível II)"/>
+                                    <p:selectOneMenu value="#{RLBMController.seqNaturezaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{RLBMController.listaTipoLancamento}" var="n"  itemLabel="#{n.nome}"  itemValue="#{n.seqTipoMovimentoFinanceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                   <p:outputLabel value="Categoria"/>
+                                   <p:selectOneMenu value="#{RLBMController.seq}" filter="true" filterMatchMode="contains"  >
+                                       <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                       <f:selectItems value="#{RLBMController.listaConta}" var="ct"  itemLabel="#{ct.banco}"  itemValue="#{ct.seqConta}"/>
+                                   </p:selectOneMenu>
+                               </p:panelGrid>
+                                <p/>
+                                <p/-->
+                            </p:panelGrid>
+
+                            <p:separator rendered="#{RLBMController.tela == 0}"/>
+
+                            <p:panelGrid id="pnlFiltroData" columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.tela == 0}">
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Emissão" value="#{RLBMController.porDataEmissao}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.porDataEmissao}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{RLBMController.dataEmissaoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{RLBMController.dataEmissaoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Vencimento" value="#{RLBMController.porDataVencimento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.porDataVencimento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{RLBMController.dataVencimentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{RLBMController.dataVencimentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+
+                            <p:dataTable id="listaPesquisa" var="p" value="#{RLBMController.listaFinanceiro}" 
+                                         rendered="#{RLBMController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" 
+                                         paginator="true" rows="15" rowsPerPageTemplate="15,50,100">
+                                <p:columnGroup type="header">
+                                    <p:row>
+                                        <p:column rowspan="2" headerText="Código"  sortBy="#{p.seqFinanceiro}"/>
+                                        <p:column rowspan="2" headerText="Parceiro"  sortBy="#{p.nomeParceiroDoc}" />
+                                        <p:column rowspan="2" headerText="Valor Total"  sortBy="#{p.valor}" />
+                                        <p:column colspan="3" headerText="Datas" />
+                                        <p:column rowspan="2" headerText="Detalhe" width="8%"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column headerText="Emissão" width="4%"  sortBy="#{p.dataEmissao}" />
+                                        <p:column headerText="Vencimento" width="4%" sortBy="#{p.dataVencimento}" />
+                                        <p:column headerText="Cadastro" width="4%" sortBy="#{p.dataCadastro}" />
+                                    </p:row>
+                                </p:columnGroup> 
+                                <p:column headerText="Código" width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+
+                                <p:column headerText="Parceiro" style="text-align: center">
+                                    <h:outputText value="#{p.nomeParceiroPC}"  title="#{p.nomeParceiroPC}"/> 
+                                </p:column>
+
+
+                                <p:column headerText="Valor Total" style="text-align: center">
+                                    <h:outputText value="#{p.valor}"  title="#{p.valor}">                               
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column headerText="Data Emissão" style="text-align: center">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}">                               
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column  headerText="Data Vencimento" style="text-align: center">
+                                    <h:outputText value="#{p.dataVencimento}"  title="#{p.dataVencimento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+
+                                <p:column  headerText="Data Cadastro" style="text-align: center">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column width="8%"  style="text-align: center" exportable="false">
+                                    <p:commandButton icon="fa fa-search Fs18 white" actionListener="#{RLBMController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="7" footerText="" />                                        
+                                    </p:row>
+                                </p:columnGroup>
+<!--p:column headerText="Código" sortBy="#{p.seqFinanceiro}" width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+                                <p:column headerText="Parceiro" sortBy="#{p.parceiro}" style="text-align: center">
+                                    <h:outputText value="#{p.parceiro}"  title="#{p.parceiro}" />                               
+                                </p:column>
+                                <p:column headerText="Data de Emissão" sortBy="#{p.dataEmissao}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+
+                                <p:column headerText="Data de Vencimento" sortBy="#{p.dataVencimento}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataVencimento}"  title="#{p.dataVencimento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+
+                                <p:column headerText="Data de Pagamento" sortBy="#{p.dataPagamento}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataPagamento}"  title="#{p.dataPagamento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column headerText="Valor" sortBy="#{p.dataCadastro}" style="text-align: center">
+                                    <h:outputText value="#{p.valor}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Status" sortBy="#{p.etapa}" style="text-align: center">
+                                    <h:outputText value="#{p.etapa}"/>
+                                </p:column>
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}"  style="text-align: center"  width="10%">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{RLBMController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column-->
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.tela == 1}"> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.financeiro.seqFinanceiro eq null}"> 
+                                <h2 class="BigTopic">Recibo de Locação de Bens Móveis</h2>     
+                            </p:panelGrid>
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.financeiro.seqFinanceiro ne null}" columnClasses="ui-grid-col-12,ui-grid-col-0" > 
+                                <h2 class="BigTopic">Recibo de Locação de Bens Móveis - nº#{RLBMController.financeiro.seqFinanceiro}</h2> 
+                                <p:commandButton value="Imprimir"  actionListener="#{RLBMController.imprimir()}" immediate="true" ajax="false"  onclick="this.form.target = '_blank'" />
+
+                                <!--p:commandLink value="Motivo do Cancelamento" immediate="true" rendered="#{RLBMController.financeiro.etapa eq 'CANCELADO' and RLBMController.financeiro.motivoCancelamento != null}" onclick="PF('motivoCancelamento').show();"/>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{RLBMController.financeiro.seqFinanceiro ne null}"> 
+                                    <p:menuButton value="#{RLBMController.financeiro.etapa}">
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="A VENCER" actionListener="#{RLBMController.enviarParaProximaEtapa('A VENCER')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="VENCIDO" actionListener="#{RLBMController.enviarParaProximaEtapa('VENCIDO')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="STANDY-BY" actionListener="#{RLBMController.enviarParaProximaEtapa('STANDY-BY')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="QUITADO" actionListener="#{RLBMController.enviarParaProximaEtapa('QUITADO')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="PARCIALMENTE QUITADO" actionListener="#{RLBMController.enviarParaProximaEtapa('PARCIALMENTE QUITADO')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="CANCELADO" actionListener="#{RLBMController.enviarParaProximaEtapa('CANCELADO')}" onclick="PF('motivoCancelamento').show();"/>
+                                    </p:menuButton> 
+                                    <p:commandButton value="Editar" style="float: right;width: 80px" actionListener="#{RLBMController.editar()}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinContasReceber== 1}"/>
+                                    <p:panelGrid columnClasses="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acFinContasReceber ne '1'}"/>
+                                </p:panelGrid-->
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlPrincipal" columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Documento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{RLBMController.financeiro.seqDocumento}" filter="true" filterMatchMode="contains" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Documento " itemValue="#{null}"/>
+                                        <f:selectItems value="#{RLBMController.listaDocumento}" var="p" itemLabel="BM - Nº #{p.codigo}" itemValue="#{p.seqDocumento}"/>
+                                        <p:ajax event="change" listener="#{RLBMController.selecionarDocumento()}" update="pnlPrincipal pnlPrincipal1"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Parceiro" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{RLBMController.financeiro.seqParceiro}" filter="true" filterMatchMode="contains"  rendered="true" requiredMessage="Informar Parceiro">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Parceiro" itemValue="#{null}"/>
+                                        <f:selectItems value="#{RLBMController.listaParceiro}" var="p" itemLabel="#{p.nome} - #{p.tipoParceiro}" itemValue="#{p.seqParceiro}"/>
+                                        <p:ajax event="change" listener="#{RLBMController.listarEquipamentos()}" update="pnlServicos"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>                                
+                                <p:panelGrid id="pnlDataEmissao" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Emissão" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt"  pattern="dd/MM/yyyy"  value="#{RLBMController.financeiro.dataEmissao}" maxdate="#{RLBMController.financeiro.dataVencimento}">                
+                                        <p:ajax event="dateSelect" listener="#{RLBMController.limiteData()}" update="pnlDataVencimento pnlDataEmissao" />
+                                    </p:calendar>
+                                </p:panelGrid>
+                                <p:panelGrid id="pnlDataVencimento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Vencimento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{RLBMController.financeiro.dataVencimento}" mindate="#{RLBMController.financeiro.dataEmissao}">                
+                                        <p:ajax event="dateSelect"  update="pnlDataVencimento pnlDataEmissao" />
+                                    </p:calendar>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                           
+                            <p:panelGrid id="pnlPrincipal1" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-4,ui-grid-col-4,ui-grid-col-6"> 
+                                
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Forma de Pagamento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{RLBMController.financeiro.seqFormaPagamento}"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Forma de Pagamento" itemValue="#{null}"/>
+                                        <f:selectItems value="#{RLBMController.listaFormaPagamento}" var="fp" itemLabel="#{fp.nome}" itemValue="#{fp.seqFormaPagamento}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Conta Bancária" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{RLBMController.financeiro.seqConta}"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Conta Bancária" itemValue="#{null}"/>
+                                        <f:selectItems value="#{RLBMController.listaConta}" var="c" itemLabel="#{c.nome}" itemValue="#{c.seqConta}"/>
+                                    </p:selectOneMenu>                               
+                                </p:panelGrid>
+
+                                <p:panelGrid  id="pnlPeriodo" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Período" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" style="width:200px;"> 
+                                            <h:outputText value="Inicio" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{RLBMController.financeiro.dataPeriodoInicialRLBM}" maxdate="#{RLBMController.financeiro.dataPeriodoFinalRLBM}">                
+                                                <p:ajax event="dateSelect" listener="#{RLBMController.limiteData()}" update="pnlPeriodo" />
+                                            </p:calendar>                
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" style="width:200px;"> 
+                                            <h:outputText value="Final" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{RLBMController.financeiro.dataPeriodoFinalRLBM}" mindate="#{RLBMController.financeiro.dataPeriodoInicialRLBM}">                
+                                                <p:ajax event="dateSelect" update="pnlPeriodo" />
+                                            </p:calendar>
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlServicos" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                <p:panelGrid id="pnlServico" columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-6,ui-grid-col-2,ui-grid-col-0" >
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Equipamento Locado"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <!--p:selectOneMenu value="#{RLBMController.equipamento.seqEquipamento}" filter="true" filterMatchMode="contains" required="#{param['frmDetalhe:btnSalvarItem']!=null}" -->
+                                        <p:selectOneMenu value="#{RLBMController.financeiroEquipamento.seqEquipamento}" filter="true" filterMatchMode="contains" required="#{param['frmDetalhe:btnSalvarItem']!=null}" >
+                                            <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                            <f:selectItems value="#{RLBMController.listaEquipamento}" var="e"  itemLabel="#{e.nome}"  itemValue="#{e.seqEquipamento}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Comentário"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{RLBMController.financeiroEquipamento.comentario}"/>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Valor"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{RLBMController.financeiroEquipamento.valor}" required="#{param['frmDetalhe:btnSalvarItem']!=null}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <br/>
+                                        <p:commandButton value="Incluir" id="btnSalvarItem" actionListener="#{RLBMController.salvarEquipamento()}"  process="@this,pnlServico" update="pnlServico tItens pnlValorTotal " />
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:dataTable id="tItens" var="i" value="#{RLBMController.listaFinanceiroEquipamento}" emptyMessage="Lista vazia" reflow="true" rowIndexVar="rowIndex" >
+                                    <p:column headerText="Item" width="8%" style="text-align: center">
+                                        <p:commandLink value="#{rowIndex+1}"   actionListener="#{RLBMController.selecionarEquipamento(i)}" update=":frmDetalhe"/>
+                                    </p:column>
+
+                                    <p:column headerText="Equipamento" sortBy="#{i.nomeEquipamento}" >
+                                        <h:outputText value="#{i.nomeEquipamento} - #{i.comentario}"  title="#{i.nomeEquipamento}" />
+                                    </p:column>
+
+                                    <p:column headerText="Valor" sortBy="#{i.valor}" width="10%">
+                                        <p:outputLabel value="#{i.valor}"  title="#{i.valor}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>            
+                                    </p:column>
+
+                                    <p:column headerText="Remover" width="8%">
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"  actionListener="#{RLBMController.removerEquipamento(i)}" disabled="#{loginController.usuario.acFinRLBM}" immediate="true" update="tItens frmDetalhe:pnlValorTotal" process="@this">
+                                            <p:confirm header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                    </p:column>
+
+                                </p:dataTable>  
+                                <p/>
+                                <p:panelGrid id="pnlValorTotal" columns="1" layout="grid" styleClass="ui-panelgrid-blank" style="text-align: right" > 
+                                    <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Valor Total" style="text-align: right"/>
+                                    <h:outputText value="#{RLBMController.financeiro.valor}" style="text-align: right">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:panelGrid>
+                                <p:separator/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                <!--h:outputText value="Descrição de Despesas" class="Fs16 gray FontRalewaySemiBold"/>
+                                <p:inputTextarea counter="desc"   counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{RLBMController.financeiro.descricao}"/>
+                                <h:outputText id="desc"/>
+
+                                <h:outputText value="Observações" class="Fs16 gray FontRalewaySemiBold"/>
+                                <p:inputTextarea counter="outros"   counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{RLBMController.financeiro.outrasInformacoes}"/>
+                                <h:outputText id="outros"/>
+
+                                <p:separator/-->
+
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Responsável" />
+                                        <h:outputText value="#{RLBMController.financeiro.responsavel}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Data de Lançamento " />
+                                        <h:outputText value="#{RLBMController.financeiro.dataCadastro}">
+                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                        </h:outputText>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:separator/>
+
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{RLBMController.tela == 1}"/>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{RLBMController.tela == 1}">
+                                <p:commandButton value="Salvar" actionListener="#{RLBMController.salvar(1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinRLBM == 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{RLBMController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <!--p:commandButton value="Cancelar" styleClass="RedButton" onclick="PF('motivoCancelamento').show();" rendered="#{RLBMController.financeiro.seqFinanceiro != null and loginController.usuario.acFinRLBM == 1}" />
+
+
+                                <p:dialog id="motivoCancelamento" header="Motivo do Cancelamento" widgetVar="motivoCancelamento" modal="true" height="150" >
+                                    <p:inputTextarea id="lblComentario" value="#{RLBMController.financeiro.motivoCancelamento}" rows="6" cols="15" placeholder="Informe o Motivo do Cancelamento"/>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                        <p:commandButton value="Salvar"  actionListener="#{RLBMController.cancelar()}"  onclick="PF('motivoCancelamento').hide();" process="@this,lblComentario"/>
+                                        <p:commandButton value="Cancelar" onclick="PF('telaComentario').hide();"/>
+                                    </p:panelGrid>
+                                </p:dialog-->
+
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{RLBMController.deletar()}" rendered="#{RLBMController.financeiro.seqFinanceiro != null and loginController.usuario.acFinRLBM == 1}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

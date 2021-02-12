@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      template="/WEB-INF/template.xhtml"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <h:head>
+
+    </h:head>
+
+    <h:body>
+
+
+        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-7,ui-grid-col-7" >
+
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Data"/>
+                <p:inputMask mask="99/99/9999" value="#{documentoController.documento.data}" required="true" requiredMessage="[DATA] é obrigatório.">
+                    <f:convertDateTime locale="pt_BR" dateStyle="long" pattern="dd/MM/yyyy" timeZone="GMT-3"/>
+                </p:inputMask>
+            </p:panelGrid>
+
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Valor"/>
+                <p:inputText value="#{documentoController.documentoItemFinanceiro.valor}" required="true" requiredMessage="[VALOR] é obrigatório">
+                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                </p:inputText>            
+            </p:panelGrid>
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Previsão de Baixa"/>
+                <p:inputMask mask="99/99/9999" value="#{documentoController.documento.dataPrevisaoConclusao}" required="true" requiredMessage="[PREVISÃO DE BAIXA] é obrigatório">
+                    <f:convertDateTime locale="pt_BR" dateStyle="long" pattern="dd/MM/yyyy" timeZone="GMT-3"/>
+                </p:inputMask>
+            </p:panelGrid>
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Conta"/>
+                <p:selectOneMenu value="#{documentoController.documentoItemFinanceiro.seqConta}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[CONTA] é Obrigatório"  >
+                    <f:selectItem value="#{null}" itemLabel="Selecione a Conta" itemValue="#{null}" />
+                    <f:selectItems value="#{documentoController.listaConta}" var="c"  itemLabel="#{c.nome} " itemValue="#{c.seqConta}" />
+                </p:selectOneMenu>
+            </p:panelGrid>
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Forma de Pagamento"/>
+                <p:selectOneMenu value="#{documentoController.documentoItemFinanceiro.seqFormaPagamento}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[FORMA DE PAGAMENTO] é Obrigatório"  >
+                    <f:selectItem value="#{null}" itemLabel="Selecione a Forma de Pagamento" itemValue="#{null}" />
+                    <f:selectItems value="#{documentoController.listaFormaPagamento}" var="p"  itemLabel="#{p.nome} " itemValue="#{p.seqFormaPagamento}" />
+                </p:selectOneMenu>
+            </p:panelGrid>
+
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                <h:outputText value="Parceiro"/>
+                <p:selectOneMenu value="#{documentoController.documento.seqParceiro}" filter="true" filterMatchMode="contains"   >
+                    <f:selectItem value="#{null}" itemLabel="Selecione um Parceiro" itemValue="#{null}" />
+                    <f:selectItems value="#{documentoController.listaParceiro}" var="pa"  itemLabel="#{pa.nome} - #{pa.tipoParceiro}" itemValue="#{pa.seqParceiro}" />
+                </p:selectOneMenu>
+            </p:panelGrid>
+
+
+
+
+        </p:panelGrid>
+
+
+    </h:body>
+
+</html>

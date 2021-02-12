@@ -1,0 +1,209 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+
+        <script type="text/javascript">
+            PrimeFaces.widget.Schedule.prototype._oldInit = PrimeFaces.widget.Schedule.prototype.init;
+            PrimeFaces.widget.Schedule.prototype.init = function (cfg) {
+                cfg.columnFormat = {
+                    month: 'ddd',
+                    week: 'ddd d/M',
+                    day: 'dddd d/M'
+                };
+
+                this._oldInit.apply(this, arguments);
+            };
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Período Atual',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+
+
+
+
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+        </style>
+
+        <f:metadata>
+            <f:viewAction  action="#{comissaoController.iniciar}" />
+        </f:metadata>
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <h2 class="BigTopic">Lançamento Financeiro - Comissão</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <p:growl id="growl" showDetail="false" sticky="true" autoUpdate="true"/> 
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Usuário" />
+                                    <p:selectOneMenu value="#{comissaoController.comissao.seqUsuario}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[PARCEIRO] é Obrigatório!">
+                                        <f:selectItem itemLabel="Selecione o Usuário" itemValue="#{null}" />
+                                        <f:selectItems value="#{comissaoController.listaUsuario}" var="us"  itemLabel="#{us.usuario}" itemValue="#{us.seqUsuario}" />
+                                        <p:ajax event="change" listener="#{comissaoController.listar()}" update=":frmDetalhe"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="7" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-2,ui-grid-col-2,ui-grid-col-2,ui-grid-col-4,ui-grid-col-2,ui-grid-col-2"> 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Operação" />
+                                        <p:selectOneMenu value="#{comissaoController.comissao.operacao}" >
+                                            <f:selectItem itemLabel="Crédito" itemValue="Crédito" />
+                                            <f:selectItem itemLabel="Débito" itemValue="Débito" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Valor (R$)" />
+                                        <p:inputText value="#{comissaoController.comissao.valor}" style="text-align: right" required="true" requiredMessage="[VALOR] é preencimento obrigatório">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Previsão Baixa" />
+                                        <p:calendar value="#{comissaoController.comissao.dataPrevBaixa}" timeZone="GMT-3" pattern="dd/MM/yyyy" locale="pt"  required="true" requiredMessage="[PREVISÃO DE BAIXA] é preencimento obrigatório"/>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Descrição" />
+                                        <p:inputText value="#{comissaoController.comissao.descricao}"  required="true" requiredMessage="[DESCRIÇÃO] é preencimento obrigatório"/>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Situação" />
+                                        <p:selectOneMenu value="#{comissaoController.comissao.status}" >
+                                            <f:selectItem itemLabel="Aberto" itemValue="Aberto" />
+                                            <f:selectItem itemLabel="Baixado" itemValue="Baixado" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Disponível no Portal" />
+                                        <p:selectOneMenu value="#{comissaoController.comissao.disponivelApp}" >
+                                            <f:selectItem itemLabel="Não" itemValue="Não" />
+                                            <f:selectItem itemLabel="Sim" itemValue="Sim" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <br/>
+                                        <p:commandButton value="Salvar" actionListener="#{comissaoController.salvar(0)}" update=":frmLista :frmDetalhe"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+
+
+
+
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe" >
+                        <p:panelGrid layout="grid"  columns="1" styleClass="ui-panelgrid-blank" > 
+
+                            <p:dataTable id="listaPesquisa" var="p" value="#{comissaoController.listaComissao}" reflow="true" style="" emptyMessage="Lista vazia">
+
+                                <p:column headerText="Operação" sortBy="#{p.operacao}">
+                                    <p:commandLink value="#{p.operacao}"  title="#{p.operacao}"  immediate="true" actionListener="#{comissaoController.selecionar(p)}"  update=":frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Valor" sortBy="#{p.valor}" style="text-align: right">
+                                    <h:outputText value="#{p.valor}"  title="#{p.valor}" style="text-align: right">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Descrição" sortBy="#{p.descricao}" >
+                                    <h:outputText value="#{p.descricao}"  title="#{p.descricao}" style="text-align: right"/>
+                                </p:column>
+
+                                <p:column headerText="Prev. Baixa" sortBy="#{p.dataPrevBaixa}">
+                                    <h:outputText value="#{p.dataPrevBaixa}"  title="#{p.dataPrevBaixa}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Baixa" sortBy="#{p.dataBaixa}">
+                                    <h:outputText value="#{p.dataBaixa}"  title="#{p.dataBaixa}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Disponível no Portal " sortBy="#{p.disponivelApp}">
+                                    <p:commandLink value="#{p.disponivelApp}"  title="#{p.disponivelApp}"  actionListener="#{comissaoController.selecionar(p)}"  update=":frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Situação" sortBy="#{p.status}">
+                                    <p:commandLink value="#{p.status}"  title="#{p.status}"  actionListener="#{comissaoController.selecionar(p)}"  update=":frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Excluir" width="8%">
+                                    <p:commandButton icon="fa fa-eraser  Fs18 white" class="orange" actionListener="#{comissaoController.deletar(p)}"  update=":frmDetalhe">
+                                    </p:commandButton>
+
+                                </p:column>
+                            </p:dataTable>
+
+
+
+
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

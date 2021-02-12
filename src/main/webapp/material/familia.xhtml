@@ -1,0 +1,149 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <h2 class="BigTopic">Família</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <h:form id="frmLista" >
+
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid rendered="#{materialFamiliaController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-0,ui-grid-col-0">
+                                <p:outputLabel value="Pesquisa"/>
+                                <p:outputLabel value=""/>
+                                <p:outputLabel value=""/>
+
+                                <p:inputText value="#{materialFamiliaController.pesquisa}"/>
+                                <p:commandButton value="Buscar" actionListener="#{materialFamiliaController.listar()}" update="listaPesquisa"/>
+                                <p:commandButton value="Novo" actionListener="#{materialFamiliaController.novo()}" update=":frmDetalhe :frmLista" />
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="p" value="#{materialFamiliaController.listaMaterialFamilia}" rendered="#{materialFamiliaController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia">
+
+                                <p:column headerText="Nome" sortBy="#{p.nome}">
+                                    <p:commandLink value="#{p.nome}"  title="#{p.nome}"  actionListener="#{materialFamiliaController.selecionar(p)}"  update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Situação" sortBy="#{p.situacao}">
+                                    <p:commandLink value="#{p.situacao}"  title="#{p.situacao}"  actionListener="#{materialFamiliaController.selecionar(p)}"  update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{materialFamiliaController.selecionar(p)}"  update=":frmDetalhe :frmLista"/>
+                                </p:column>
+                            </p:dataTable>
+
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+
+                        <p:panelGrid rendered="#{materialFamiliaController.tela == 1}" layout="grid"  columns="1" styleClass="ui-panelgrid-blank" > 
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+
+                                <h:outputText value="Nome" />
+                                <p:inputText value="#{materialFamiliaController.materialFamilia.nome}" required="true" requiredMessage="Nome"/>                
+
+
+                                <h:outputText value="Situação" />
+                                <p:selectOneMenu value="#{materialFamiliaController.materialFamilia.situacao}" >
+                                    <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                    <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                </p:selectOneMenu>
+
+
+                                <h:outputText value="Data de Cadastro" />
+                                <h:outputText value="#{materialFamiliaController.materialFamilia.dataCadastro}" >                
+                                    <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                </h:outputText>
+
+                            </p:panelGrid>
+
+                         
+
+                            <h2 class="BigTopic"> </h2>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0">
+                                <p:commandButton value="Salvar e Fechar" actionListener="#{materialFamiliaController.salvar(0)}" update=":frmDetalhe :frmLista"/>
+                                <p:commandButton value="Salvar" actionListener="#{materialFamiliaController.salvar(1)}" update=":frmDetalhe :frmLista"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{materialFamiliaController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{materialFamiliaController.deletar()}" rendered="#{materialFamiliaController.materialFamilia.seqMaterialFamilia!=0}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

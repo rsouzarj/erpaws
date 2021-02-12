@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <script type="text/javascript">
+        function sayHello() {
+            var url = window.location.href.toString();
+            console.log('url'+url);
+            var res = url.replace("http://", "");
+         //   alert(res);
+            console.log('res'+res);
+
+            windows.location.href = res.toString();
+
+            console.log("-------------------------------------------------->>>>>>>>>>>deu erro. recarregou?");
+        }
+        window.onload = sayHello();
+    </script>
+</html>

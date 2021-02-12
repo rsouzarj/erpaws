@@ -1,0 +1,578 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <f:metadata>
+         <f:viewAction  action="#{prestacaoContasController.iniciarPrestacaoContas()}" />
+    </f:metadata>
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Começo',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                currentText: 'Data Atual',
+                        ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }     
+            h2{color:black;}
+
+
+        </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{prestacaoContasController.tela == 0}"/>
+
+                            <p:panelGrid rendered="#{prestacaoContasController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-2,ui-grid-col-0">
+                                <h2>Prestação de Contas - #{prestacaoContasController.loginController.usuario.seqUsuario}</h2>  
+                                <!--h:commandLink title="Exportar Excel">
+                                    <img src="../images/excel.png" alt="Smiley face" height="35" width="35"/>
+                                    <p:dataExporter type="xls" encoding="iso-8859-1" target="listaPesquisa" fileName="Relatorio" pageOnly="false" postProcessor="#{prestacaoContasController.postProcessXLS}"/>
+                                </h:commandLink-->
+                                <p:commandButton value="Buscar" actionListener="#{prestacaoContasController.listarPrestacaoContasC()}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Novo" ajax="false" actionListener="#{prestacaoContasController.novo()}" update=":frmDetalhe :frmLista"  />
+                            </p:panelGrid>
+                           
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{prestacaoContasController.tela == 0}">
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Tipo de Parceiro"/>
+                                    <p:selectOneMenu value="#{prestacaoContasController.seqTipoParceiroSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{prestacaoContasController.listaTipoParceiro}" var="tp"  itemLabel="#{tp.nome}"  itemValue="#{tp.seqTipoParceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+                               
+                            </p:panelGrid>
+
+                            <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Centro de Custo"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.seqCentroCustoSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{prestacaoContasController.listaCentroCusto}" var="cs"  itemLabel="#{cs.nome}"  itemValue="#{cs.seqCentroCusto}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Documento Fiscal"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.seqDocumentoFiscalSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{prestacaoContasController.listaDocumentoFiscal}" var="df"  itemLabel="#{df.nome}"  itemValue="#{df.seqDocumentoFiscal}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>-->
+                           
+                            <!--<p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Local Financeiro"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.seqContaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{prestacaoContasController.listaConta}" var="ct"  itemLabel="#{ct.banco}"  itemValue="#{ct.seqConta}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Categoria (Nível I)"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.seqCategoriaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{prestacaoContasController.listaFinanceiroCategoria}" var="fc"  itemLabel="#{fc.nome}"  itemValue="#{fc.seqFinanceiroCategoria}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:outputLabel value="Categoria (Nível II)"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.seqNaturezaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItems value="#{prestacaoContasController.listaTipoLancamento}" var="n"  itemLabel="#{n.nome}"  itemValue="#{n.seqTipoMovimentoFinanceiro}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p/>
+                        </p:panelGrid-->
+
+                            
+
+                     
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+
+                            <p:dataTable id="listaPesquisa" var="p" value="#{prestacaoContasController.listaFinanceiro}" rendered="#{prestacaoContasController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+                                <p:columnGroup type="header">
+                                    <p:row>
+                                        <p:column rowspan="2" headerText="Código"  sortBy="#{p.seqFinanceiro}"  />
+                                        <p:column rowspan="2" headerText="Colaborador"  sortBy="#{p.nomeColaborador}" />
+                                        <p:column rowspan="2" headerText="Parceiro" sortBy="#{p.nomeParceiroPC}"/>
+                                        <p:column colspan="2" headerText="Período" />
+                                        <p:column rowspan="2" headerText="Saldo"  sortBy="#{p.valor}" />
+                                        <p:column rowspan="2" headerText="Detalhe" width="8%"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column headerText="Início" width="4%" sortBy="#{p.dataPeriodoInicio}" />
+                                        <p:column headerText="Final" width="4%" sortBy="#{p.dataPeriodoFinal}" />
+                                    </p:row>
+                                </p:columnGroup> 
+                                <p:column  width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+
+                                <p:column  style="text-align: center">
+                                    <h:outputText value="#{p.nomeColaborador}"  title="#{p.nomeColaborador}"/> 
+                                </p:column>
+
+                                <p:column style="text-align: center">
+                                    <h:outputText value="#{p.nomeParceiroPC}"  title="#{p.tipoLancamento}"/> 
+                                </p:column>
+
+                                <p:column style="text-align: center">
+                                    <h:outputText value="#{p.dataPeriodoInicio}"  title="#{p.dataPeriodoInicio}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column style="text-align: center">
+                                    <h:outputText value="#{p.dataPeriodoFinal}"  title="#{p.dataPeriodoFinal}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR"  />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column   style="text-align: center">
+                                    <h:outputText value="#{p.valor}"  title="#{p.valor}">                               
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column width="8%"  style="text-align: center">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{prestacaoContasController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="3" style="text-align:right" />
+                                        <p:column colspan="4" footerText="" />                                        
+                                    </p:row>
+                                </p:columnGroup>
+
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{prestacaoContasController.tela == 1}"> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{prestacaoContasController.financeiro.seqFinanceiro eq null}"> 
+                                <h2 class="BigTopic" >Prestação de Contas</h2>     
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlStatus" columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-0" rendered="#{prestacaoContasController.financeiro.seqFinanceiro ne null}"> 
+                                <h2 class="BigTopic">Prestação de Contas - nº#{prestacaoContasController.financeiro.seqFinanceiro}  /   #{prestacaoContasController.financeiro.etapa}</h2>
+                                <p:commandButton value="Imprimir"  actionListener="#{prestacaoContasController.imprimirPrestacaoContas()}" immediate="true" ajax="false"  onclick="this.form.target = '_blank'" disabled = "#{prestacaoContasController.financeiro.etapa == 'CANCELADO'}"/>
+                                            
+                            </p:panelGrid>
+                            
+                                                       
+                             
+                                <p:panelGrid   columns="2"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{prestacaoContasController.tela == 1}">
+                                <p:outputLabel value="Status"/>
+                                <p:selectOneMenu value="#{prestacaoContasController.financeiro.etapa}" filter="true" filterMatchMode="contains">
+                                    <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                    <f:selectItem itemLabel="A VENCER" itemValue="A VENCER" />
+                                    <f:selectItem itemLabel="VENCIDO" itemValue="VENCIDO" />
+                                    <f:selectItem itemLabel="STANDY-BY" itemValue="STANDY-BY" />
+                                    </p:selectOneMenu>
+                                <h:outputText value="DOCUMENTO " />
+                                    <h:outputText value="#{prestacaoContasController.financeiro.seqDocumento}" />
+                                </p:panelGrid>
+                                 <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Colaborador" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{prestacaoContasController.financeiro.seqColaborador}" filter="true" filterMatchMode="contains" required="true" requiredMessage="Colaborador é obrigatório!">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                        <f:selectItems value="#{prestacaoContasController.listaColaborador}" var="c" itemLabel="#{c.nome}" itemValue="#{c.seqColaborador}"/>
+                                    </p:selectOneMenu>                   
+                                </p:panelGrid>
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="CPF" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:inputMask mask="999.999.999-99" />
+                                </p:panelGrid-->
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Ordem de Serviço" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{prestacaoContasController.financeiro.seqDocumento}" filter="true" filterMatchMode="contains">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                        <f:selectItems value="#{prestacaoContasController.listaDocumento}" var="d" itemLabel="Nº#{d.codigo}" itemValue="#{d.seqDocumento}"/>
+                                    </p:selectOneMenu> 
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Período" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-4,ui-grid-col-4,ui-grid-col-0" > 
+                                        <p:panelGrid id="pnlDataPeriodoInicio" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                            <h:outputText value="Início" />
+                                            <p:calendar locale="pt" pattern="dd/MM/yyyy" value="#{prestacaoContasController.financeiro.dataPeriodoInicio}" maxdate="#{prestacaoContasController.financeiro.dataPeriodoFinal}">
+                                            <p:ajax event="dateSelect" listener="#{financeiroController.limiteData()}" update="pnlDataPeriodoFinal pnlDataPeriodoInicio" />
+                                            </p:calendar>                
+                                        </p:panelGrid>
+                                        <p:panelGrid id="pnlDataPeriodoFinal" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                            <h:outputText value="Final" />
+                                            <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{prestacaoContasController.financeiro.dataPeriodoFinal}" mindate="#{prestacaoContasController.financeiro.dataPeriodoInicio}">
+                                            <p:ajax event="dateSelect" update="pnlDataPeriodoInicio pnlDataPeriodoFinal" />
+                                            </p:calendar>                
+                                        </p:panelGrid>
+                                        <p/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p/>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Cliente" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{prestacaoContasController.financeiro.seqParceiro}" filter="true" filterMatchMode="contains">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                        <f:selectItems value="#{prestacaoContasController.listaParceiro}" var="p" itemLabel="#{p.nome}" itemValue="#{p.seqParceiro}"/>
+                                        <p:ajax event="change" listener="#{prestacaoContasController.listarEquipEmbarc()}" update="pnlEquipEmbarc"/>
+                                    </p:selectOneMenu>                                 
+                                </p:panelGrid>
+                                <p:panelGrid id="pnlEquipEmbarc" columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Equipamento" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{prestacaoContasController.financeiro.seqEquipamento}" filter="true" filterMatchMode="contains">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                            <f:selectItems value="#{prestacaoContasController.listaEquipamento}" var="e" itemLabel="#{e.nome}" itemValue="#{e.seqEquipamento}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Embarcação" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{prestacaoContasController.financeiro.seqNvEmbarcacao}" filter="true" filterMatchMode="contains">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                            <f:selectItems value="#{prestacaoContasController.listaNvEmbarcacaoParceiro}" var="nv" itemLabel="#{nv.nvEmbarcacaoNome}" itemValue="#{nv.seqEmbarcacao}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Local do Serviço" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiro.localServico}" />                
+                                    </p:panelGrid>
+                                   <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Valor de Fundo" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiro.valorRecebido}" >                
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            <p:ajax event="keyup" listener="#{prestacaoContasController.calcularSaldo}" update="pnlSaldo"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Total da Movimentação" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiro.valorTotalMovimentacao}" >                
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            <p:ajax event="keyup" listener="#{prestacaoContasController.calcularSaldo}" update="pnlSaldo"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid id="pnlSaldo" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:outputLabel value="Saldo" class="BigTopic"/>
+                                        <p:outputLabel value="#{prestacaoContasController.financeiro.valor}" class="BigTopic">
+                                        
+                                        <!--<h:outputText value="Saldo" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiro.valor}" >-->                
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                         </p:outputLabel >
+                                        <!--</p:inputText>-->
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            
+
+                            <p:separator/>
+
+                            <p:panelGrid id="pnlServicos" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                <p:panelGrid id="pnlServico" columns="5" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-2,ui-grid-col-4,ui-grid-col-2,ui-grid-col-2,ui-grid-col-5" >
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Data"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{prestacaoContasController.financeiroItemPc.data}" required="#{param['frmDetalhe:btnSalvarItem']!=null}" />                
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Documento"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{prestacaoContasController.financeiroItemPc.seqDocumentoFiscal}" filter="true" filterMatchMode="contains" required="#{param['frmDetalhe:btnSalvarItem']!=null}" >
+                                            <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                            <f:selectItems value="#{prestacaoContasController.listaDocumentoFiscal}" var="df"  itemLabel="#{df.nome}"  itemValue="#{df.seqDocumentoFiscal}"/>
+                                            <p:ajax event="change" listener="#{prestacaoContasController.selecionarDocumentoFiscal()}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Nº Documento"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiroItemPc.numeroDocumento}" required="#{param['frmDetalhe:btnSalvarItem']!=null}" />
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="CNPJ/CPF"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiroItemPc.cnpjCpf}" required="#{param['frmDetalhe:btnSalvarItem']!=null}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Razão Social"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiroItemPc.razaoSocial}" required="#{param['frmDetalhe:btnSalvarItem']!=null}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid id="pnlServico2" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-8, ui-grid-col-2,ui-grid-col-2">
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Descrição"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiroItemPc.descricao}" required="#{param['frmDetalhe:btnSalvarItem']!=null}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Valor"  class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:inputText value="#{prestacaoContasController.financeiroItemPc.valor}" required="#{param['frmDetalhe:btnSalvarItem']!=null}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <br/>
+                                        <p:commandButton value="Incluir" id="btnSalvarItem" actionListener="#{prestacaoContasController.salvarFinanceiroItemPC()}"  process="@this,pnlServico,pnlServico2" update="pnlServico pnlServico2 tItens " />
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:dataTable id="tItens" var="i" value="#{prestacaoContasController.listaFinanceiroItemPc}" emptyMessage="Lista vazia" reflow="true" rowIndexVar="rowIndex" >
+                                    <p:column headerText="Item" width="8%" style="text-align: center">
+                                        <p:commandLink value="#{rowIndex+1}"   actionListener="#{prestacaoContasController.selecionarFinanceiroItemPC(i)}" update=":frmDetalhe"/>
+                                    </p:column>
+                                    <p:column headerText="Data" sortBy="#{i.data}" width="15%">
+                                        <h:outputText value="#{i.data}"  title="#{i.data}" >
+                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Documento" sortBy="#{i.nomeDocumentoFiscal}" width="20%">
+                                        <h:outputText value="#{i.nomeDocumentoFiscal}"  title="#{i.nomeDocumentoFiscal}" />
+                                        <!--p:commandLink value="#{i.nomeDocumentoFiscal}"  title="#{i.nomeDocumentoFiscal}"  actionListener="#{prestacaoContasController.selecionarFinanceiroItemPC(i)}" update=":frmDetalhe"/-->
+                                    </p:column>
+                                    <p:column headerText="Nº Doc" sortBy="#{i.numeroDocumento}" width="15%">
+                                        <h:outputText value="#{i.numeroDocumento}"  title="#{i.numeroDocumento}" />
+                                        <!--p:commandLink value="#{i.numeroDocumento}"  title="#{i.numeroDocumento}"  actionListener="#{prestacaoContasController.selecionarFinanceiroItemPC(i)}" update=":frmDetalhe"/-->
+                                    </p:column>
+                                    <p:column headerText="CNPJ/CPF" sortBy="#{i.cnpjCpf}" width="20%">
+                                        <h:outputText value="#{i.cnpjCpf}"  title="#{i.cnpjCpf}" />
+                                        <!--p:commandLink value="#{i.cnpjCpf}"  title="#{i.cnpjCpf}"  actionListener="#{prestacaoContasController.selecionarFinanceiroItemPC(i)}" update=":frmDetalhe"/-->
+                                    </p:column>
+                                    <p:column headerText="Razão Social" sortBy="#{i.razaoSocial}" width="30%">
+                                        <h:outputText value="#{i.razaoSocial}"  title="#{i.razaoSocial}" />
+                                    <!--p:commandLink value="#{i.razaoSocial}"  title="#{i.razaoSocial}"  actionListener="#{prestacaoContasController.selecionarFinanceiroItemPC(i)}" update=":frmDetalhe"/-->
+                                    </p:column>
+                                    <p:column headerText="Descrição" sortBy="#{i.descricao}" width="30%">
+                                        <h:outputText value="#{i.descricao}"  title="#{i.descricao}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" sortBy="#{i.valor}" width="10%">
+                                        <p:outputLabel value="#{i.valor}"  title="#{i.valor}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>            
+                                    </p:column>
+
+                                    <p:column headerText="Remover" width="8%">
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"  actionListener="#{prestacaoContasController.removerFinanceiroItemPC(i)}" immediate="true" update="tItens" process="@this">
+                                          <!--p:confirm header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" /-->
+                                        </p:commandButton>
+                                    </p:column>
+                                </p:dataTable>  
+                            </p:panelGrid>
+
+                            <!--<p:separator/>-->
+                                         
+                            <p:accordionPanel> 
+                                <p:tab title="Anexos"  id="tabAnexos" rendered="#{prestacaoContasController.financeiro.seqFinanceiro != null}">
+                               	<p:panelGrid id="pnlAnexos" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:growl id="messagesg" showDetail="true" />
+                                    <p:panelGrid columns="3" layout="grid" styleClass=" ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-4,ui-grid-col-4"> 
+                                      <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <p:outputLabel value="Tipo de Arquivo"/>
+                                            <p:inputText value="#{prestacaoContasController.upload.tipoArquivo}" />
+                                      </p:panelGrid>        
+                                        <p:fileUpload label="Selecionar Arquivo" value="#{prestacaoContasController.file}" mode="simple" skinSimple="true"/>
+                                        <p:commandButton value="Adicionar" ajax="false" actionListener="#{prestacaoContasController.upload}" rendered="#{loginController.usuario.acFinPrestacaoContas== 1}" update=" tblAnexos"/>
+                                    </p:panelGrid>                            
+                                </p:panelGrid>
+                                    <p:dataTable id="tblAnexos" var="a" rowIndexVar="id" value="#{prestacaoContasController.listaUpload}" emptyMessage="Lista vazia" reflow="true">
+                                    <p:column headerText="ID" width="8%" style="text-align: center">
+                                        <p:outputLabel value="#{id+1}"/>
+                                    </p:column>
+                                    <p:column headerText="Nome" style="text-align: center">
+                                        <p:outputLabel value="#{a.nomeArquivo}"/>
+                                    </p:column>
+                                     <p:column headerText="Tipo" style="text-align: center">
+                                         <p:outputLabel value="#{a.tipoArquivo}"/>
+                                        </p:column>
+                                    <p:column headerText="Usuário" style="text-align: center">
+                                        <p:outputLabel value="#{a.nomeUsuario}"/>
+                                    </p:column>
+                                    <!--<p:column headerText="Visualizar" width="8%" style="text-align: center" >
+                                        <p:commandButton actionListener="#{prestacaoContasController.visualizar(a)}" style="width: 50px" immediate="true" ajax="false"  onclick="this.form.target = '_blank'" icon="fa fa-eye white"/>
+                                    </p:column>-->
+                                                                       
+                                    <p:column headerText="Download" width="8%" style="text-align: center" >
+                                        <p:commandButton actionListener="#{prestacaoContasController.download(a)}" style="width: 50px" ajax="false" onclick="this.form.target = '_blank'" icon="fa fa-arrow-circle-down white">
+                                            <p:fileDownload value="#{prestacaoContasController.fileDownload}" />
+                                        </p:commandButton>
+                                    </p:column>
+                                    <p:column headerText="Remover" width="8%" style="text-align: center">
+                                        <p:commandButton icon="fa fa-eraser white" style="width: 50px" styleClass="RedButton" actionListener="#{prestacaoContasController.removerAnexo(a)}" rendered="#{prestacaoContasController.idDocumento !=0 and loginController.usuario.acDocNovo == 1}" update=":frmDetalhe :frmLista">
+                                            <p:confirm header="Confirmação" message="Deseja excluir o anexo?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                            <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                            <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                        </p:confirmDialog> 
+                                    </p:column>
+                                </p:dataTable>
+                            </p:tab>
+                        </p:accordionPanel>
+                            
+                            
+                            
+                            
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Responsável"/>
+                                    <h:outputText value="#{prestacaoContasController.financeiro.responsavel}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Data de Lançamento"/>
+                                    <h:outputText value="#{prestacaoContasController.financeiro.dataCadastro}">
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText> 
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:separator/>
+
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{prestacaoContasController.tela == 1}"/>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{prestacaoContasController.tela == 1}">
+                                <p:commandButton value="Salvar" actionListener="#{prestacaoContasController.salvar(0)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinPrestacaoContas== 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{prestacaoContasController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Cancelar" styleClass="RedButton" onclick="PF('motivoCancelamento').show();" rendered="#{prestacaoContasController.financeiro.seqFinanceiro != null and loginController.usuario.acFinPrestacaoContas == 1}" />
+
+
+                                <p:dialog id="motivoCancelamento" header="Motivo do Cancelamento" widgetVar="motivoCancelamento" modal="true" height="150" >
+                                    <p:inputTextarea id="lblComentario" value="#{prestacaoContasController.financeiro.motivoCancelamento}" rows="6" cols="15" placeholder="Informe o Motivo do Cancelamento"/>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                        <p:commandButton value="Salvar"  actionListener="#{prestacaoContasController.cancelar()}"  onclick="PF('motivoCancelamento').hide();" process="@this,lblComentario"/>
+                                        <p:commandButton value="Cancelar" onclick="PF('telaComentario').hide();"/>
+                                    </p:panelGrid>
+                                </p:dialog>
+                                
+
+<!--p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{financeiroController.deletar()}" rendered="#{prestacaoContasController.financeiro.seqFinanceiro != null and loginController.usuario.acFinPrestacaoContas == 1}" update=":frmDetalhe :frmLista">
+    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+</p:commandButton>
+
+<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+</p:confirmDialog-->                                                              
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

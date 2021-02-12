@@ -1,0 +1,776 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+    <f:metadata>
+        <f:viewAction  action="#{financeiroController.iniciarContasReceber()}" />
+    </f:metadata>
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Começo',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                currentText: 'Data Atual',
+                        ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }     
+            h2{color:black;}
+
+
+        </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h:form id="frmLista" >
+                        <div class="Container100 Responsive100">
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{financeiroController.tela == 0}"/>
+
+                            <p:panelGrid rendered="#{financeiroController.tela == 0}" columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-12,ui-grid-col-0,ui-grid-col-2,ui-grid-col-0">
+                                <h2>Contas a Receber</h2>  
+                                <h:commandLink title="Exportar Excel">
+                                    <img src="../images/excel.png" alt="Smiley face" height="35" width="35"/>
+                                    <p:dataExporter type="xls" encoding="iso-8859-1" target="listaPesquisa" fileName="Relatorio" pageOnly="false" postProcessor="#{financeiroController.postProcessXLS}"/>
+                                </h:commandLink>
+                                <p:commandButton value="Buscar" actionListener="#{financeiroController.listarContasReceber()}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Novo" ajax="false" actionListener="#{financeiroController.novo()}" update=":frmDetalhe :frmLista"  rendered="#{loginController.usuario.acFinContasReceber == 1}"/>
+                            </p:panelGrid>
+                            <p:separator rendered="#{financeiroController.tela == 0}"/>
+
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 0}">
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Tipo de Parceiro"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqTipoParceiroSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaTipoParceiro}" var="tp"  itemLabel="#{tp.nome}"  itemValue="#{tp.seqTipoParceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Parceiro"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqParceiroSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaParceiro}" var="p"  itemLabel="#{p.nome} - #{p.tipoParceiro}"  itemValue="#{p.seqParceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Centro de Custo"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqCentroCustoSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem  itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaCentroCusto}" var="cs"  itemLabel="#{cs.nome}"  itemValue="#{cs.seqCentroCusto}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Documento Fiscal"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqDocumentoFiscalSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaDocumentoFiscal}" var="df"  itemLabel="#{df.nome}"  itemValue="#{df.seqDocumentoFiscal}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Status"/>
+                                    <p:selectOneMenu value="#{financeiroController.statusSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItem itemLabel="A VENCER" itemValue="A VENCER" />
+                                        <f:selectItem itemLabel="VENCIDO" itemValue="VENCIDO" />
+                                        <f:selectItem itemLabel="STANDY-BY" itemValue="STANDY-BY" />
+                                        <f:selectItem itemLabel="CANCELADO" itemValue="CANCELADO" />
+                                        <f:selectItem itemLabel="PARCIALMENTE QUITADO" itemValue="PARCIALMENTE QUITADO" />
+                                        <f:selectItem itemLabel="QUITADO" itemValue="QUITADO" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Local Financeiro"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqContaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaConta}" var="ct"  itemLabel="#{ct.banco}"  itemValue="#{ct.seqConta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Categoria (Nível I)"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqCategoriaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaFinanceiroCategoria}" var="fc"  itemLabel="#{fc.nome}"  itemValue="#{fc.seqFinanceiroCategoria}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:outputLabel value="Categoria (Nível II)"/>
+                                    <p:selectOneMenu value="#{financeiroController.seqNaturezaSelecionado}" filter="true" filterMatchMode="contains"  >
+                                        <f:selectItem value="#{null}" itemLabel="Todos" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaTipoLancamento}" var="n"  itemLabel="#{n.nome}"  itemValue="#{n.seqTipoMovimentoFinanceiro}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+
+                            <p:separator rendered="#{financeiroController.tela == 0}"/>
+
+                            <p:panelGrid id="pnlFiltroData" columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 0}">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Lançamento" value="#{financeiroController.porDataLancamento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.porDataLancamento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{financeiroController.dataLancamentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{financeiroController.dataLancamentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Recebimento" value="#{financeiroController.porDataPagamento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.porDataPagamento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{financeiroController.dataPagamentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{financeiroController.dataPagamentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectBooleanCheckbox  itemLabel="Informar Data de Vencimento" value="#{financeiroController.porDataVencimento}">
+                                        <p:ajax event="change" update="pnlFiltroData"/>
+                                    </p:selectBooleanCheckbox>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.porDataVencimento}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Inicial" />
+                                            <p:inputMask mask="99/99/9999"    value="#{financeiroController.dataVencimentoInicial}" required="true" requiredMessage="[DATA INICIAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Data Final" />
+                                            <p:inputMask mask="99/99/9999"   value="#{financeiroController.dataVencimentoFinal}"  required="true" requiredMessage="[DATA FINAL] é obrigatório!" >
+                                            </p:inputMask>
+                                        </p:panelGrid>                                
+                                    </p:panelGrid>                                
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+
+                            <p:dataTable id="listaPesquisa" var="p" value="#{financeiroController.listaFinanceiro}" 
+                                         rendered="#{financeiroController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" 
+                                         paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+                                <p:columnGroup type="header">
+                                    <p:row>
+                                        <p:column rowspan="2" headerText="Código"  sortBy="#{p.seqFinanceiro}"  />
+                                        <p:column rowspan="2" headerText="Parceiro"  sortBy="#{p.nomeParceiroDoc}" />
+                                        <p:column rowspan="2" headerText="Categoria II" sortBy="#{p.tipoLancamento}"/>
+                                        <p:column colspan="2" headerText="Valores" />
+                                        <p:column colspan="4" headerText="Datas" />
+                                        <p:column rowspan="2" headerText="Status"  sortBy="#{p.etapa}" />
+                                        <p:column rowspan="2" headerText="Detalhe" width="8%"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column headerText="Previsto" width="4%" sortBy="#{p.valor}" />
+                                        <p:column headerText="Recebido" width="4%" sortBy="#{p.valorRecebido}" />
+
+                                        <p:column headerText="Emissão" width="4%"  sortBy="#{p.dataEmissao}" />
+                                        <p:column headerText="Vencimento" width="4%" sortBy="#{p.dataVencimento}" />
+                                        <p:column headerText="Recebimento" width="4%" sortBy="#{p.dataPagamento}" />
+                                        <p:column headerText="Cadastro" width="4%" sortBy="#{p.dataCadastro}" />
+                                    </p:row>
+                                </p:columnGroup> 
+                                         <p:column headerText="Código" width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+
+                                <p:column headerText="Parceiro" style="text-align: center">
+                                    <h:outputText value="#{p.nomeParceiroPC}"  title="#{p.nomeParceiroDoc}"/> 
+                                </p:column>
+
+                                <p:column headerText="Categoria II" style="text-align: center">
+                                    <h:outputText value="#{p.tipoLancamento}"  title="#{p.tipoLancamento}"/> 
+                                </p:column>
+                                <p:column headerText="Valor Previsto" style="text-align: center">
+                                    <h:outputText value="#{p.valor}"  title="#{p.valor}">                               
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column headerText="Valor Recebido" style="text-align: center">
+                                    <h:outputText value="#{p.valorRecebido}"  title="#{p.valorRecebido}"> 
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column headerText="Data Emissão" style="text-align: center">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}">                               
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText> 
+                                </p:column>
+
+                                <p:column  headerText="Data Vencimento" style="text-align: center">
+                                    <h:outputText value="#{p.dataVencimento}"  title="#{p.dataVencimento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column  headerText="Data Recebimento" style="text-align: center">
+                                    <h:outputText value="#{p.dataPagamento}"  title="#{p.dataPagamento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+
+                                <p:column  headerText="Data Cadastro" style="text-align: center">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column  headerText="Status" style="text-align: center">
+                                    <h:outputText value="#{p.etapa}"  title="#{p.etapa}" />
+                                </p:column>
+
+                                <p:column width="8%"  style="text-align: center" exportable="false">
+                                    <p:commandButton icon="fa fa-search Fs18 white" actionListener="#{financeiroController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+
+                                
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="3" style="text-align:right" />
+                                        <p:column footerText="#{financeiroController.totalValorBruto}"/>
+                                        <p:column footerText="#{financeiroController.totalValorLiquido}"/>
+                                        <p:column colspan="6" footerText="" />                                        
+                                    </p:row>
+                                </p:columnGroup>
+
+ <!--p:column headerText="Código" sortBy="#{p.seqFinanceiro}" width="8%"  style="text-align: center">
+                                    <h:outputText value="#{p.seqFinanceiro}"  title="#{p.seqFinanceiro}" />                               
+                                </p:column>
+                                <p:column headerText="Parceiro" sortBy="#{p.parceiro}" style="text-align: center">
+                                    <h:outputText value="#{p.parceiro}"  title="#{p.parceiro}" />                               
+                                </p:column>
+                                <p:column headerText="Natureza" sortBy="#{p.tipoLancamento}" style="text-align: center">
+                                    <h:outputText value="#{p.tipoLancamento}"  title="#{p.tipoLancamento}" />                               
+                                </p:column>
+                                <p:column headerText="Data de Emissão" sortBy="#{p.dataEmissao}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataEmissao}"  title="#{p.dataEmissao}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column headerText="Data de Vencimento" sortBy="#{p.dataVencimento}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataVencimento}"  title="#{p.dataVencimento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column headerText="Data de Recebimento" sortBy="#{p.dataPagamento}"  style="text-align: center">
+                                    <h:outputText value="#{p.dataPagamento}"  title="#{p.dataPagamento}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>                               
+                                </p:column>
+                                <p:column headerText="Valor" sortBy="#{p.valor}" style="text-align: center">
+                                    <h:outputText value="#{p.valor}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Status" sortBy="#{p.etapa}" style="text-align: center">
+                                    <h:outputText value="#{p.etapa}"/>
+                                </p:column>
+                                <p:column headerText="Dt. Cadastro" sortBy="#{p.dataCadastro}"  style="text-align: center"  width="10%">
+                                    <h:outputText value="#{p.dataCadastro}"  title="#{p.dataCadastro}"  >
+                                        <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                    </h:outputText>
+                                </p:column>
+
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{financeiroController.selecionar(p)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column-->
+                            </p:dataTable>
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.tela == 1}"> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro eq null}"> 
+                                <h2 class="BigTopic" >Contas a Receber</h2>     
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlStatus" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro ne null}"> 
+                            <!--<p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro ne null}">  -->
+                                <h2 class="BigTopic">Contas a Receber - nº#{financeiroController.financeiro.seqFinanceiro}</h2>
+                                <p:commandLink value="Motivo do Cancelamento" immediate="true" rendered="#{financeiroController.financeiro.etapa eq 'CANCELADO' and financeiroController.financeiro.motivoCancelamento != null}" onclick="PF('motivoCancelamento').show();"/>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiro.seqFinanceiro ne null}"> 
+                                    <p:menuButton value="#{financeiroController.financeiro.etapa}">
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="A VENCER" actionListener="#{financeiroController.enviarParaProximaEtapa('A VENCER')}" update="pnlStatus"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="VENCIDO" actionListener="#{financeiroController.enviarParaProximaEtapa('VENCIDO')}" update="pnlStatus"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="STANDY-BY" actionListener="#{financeiroController.enviarParaProximaEtapa('STANDY-BY')}" update="pnlStatus"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="QUITADO" actionListener="#{financeiroController.enviarParaProximaEtapa('QUITADO')}" update="pnlStatus"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="PARCIALMENTE QUITADO" actionListener="#{financeiroController.enviarParaProximaEtapa('PARCIALMENTE QUITADO')}"/>
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="CANCELADO" actionListener="#{financeiroController.enviarParaProximaEtapa('CANCELADO')}" update="pnlStatus" onclick="PF('motivoCancelamento').show();"/>
+                                    </p:menuButton> 
+                                    <p:commandButton value="Editar" style="float: right;width: 80px" actionListener="#{financeiroController.editar()}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinContasReceber== 1}"/>
+                                    <p:panelGrid columnClasses="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{loginController.usuario.acFinContasReceber ne '1'}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <!--p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Unidade de Negócio" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqUnidadeNegocio}" filter="true" filterMatchMode="contains" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Empresa" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaUnidadeNegocio}" var="un"  itemLabel="#{un.nome} - #{un.cnpj}" itemValue="#{un.seqUnidadeNegocio}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid id="pnlNatureza" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Natureza (Nível II)" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqTipoMovimento}" filter="true" filterMatchMode="contains">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Natureza" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaTipoLancamento}" var="tp" itemLabel="#{tp.nome}" itemValue="#{tp.seqTipoMovimentoFinanceiro}"/>
+                                        <p:ajax event="change" update="pnlColaborador"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                            </p:panelGrid-->
+                            <p:panelGrid id="pnlData" columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data da Lançamento" />
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{financeiroController.financeiro.dataLancamento}" disabled="true"/>                
+                                </p:panelGrid-->
+
+                                <!-- original | Alex
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <p:panelGrid id="pnlDataEmissao" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Emissão" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt" disabled="#{financeiroController.id}" pattern="dd/MM/yyyy" maxdate="#{financeiroController.financeiro.dataVencimento}" value="#{financeiroController.financeiro.dataEmissao}" >                
+                                        <p:ajax event="dateSelect" listener="#{financeiroController.limiteData()}" update="pnlDataVencimento pnlDataEmissao "/>
+                                    </p:calendar>
+                                </p:panelGrid>
+                                -->
+                                <p:panelGrid id="pnlDataEmissao" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Emissão" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt"  pattern="dd/MM/yyyy"  value="#{financeiroController.financeiro.dataEmissao}" maxdate="#{financeiroController.financeiro.dataVencimento}">                
+                                        <p:ajax event="dateSelect" listener="#{financeiroController.limiteData()}" update="pnlDataVencimento pnlDataEmissao" />
+                                    </p:calendar>
+                                </p:panelGrid>
+
+                                <!-- original | Alex
+                                <p:panelGrid id="pnlDataVencimento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Vencimento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy" mindate="#{financeiroController.financeiro.dataEmissao}" disabled="#{financeiroController.id}" value="#{financeiroController.financeiro.dataVencimento}" >                
+                                        <p:ajax event="dateSelect" update="pnlDataVencimento pnlDataEmissao "/>
+                                    </p:calendar>
+
+                                </p:panelGrid>
+                                -->
+
+                                <p:panelGrid id="pnlDataVencimento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Vencimento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt" pattern="dd/MM/yyyy"  value="#{financeiroController.financeiro.dataVencimento}" mindate="#{financeiroController.financeiro.dataEmissao}">                
+                                        <p:ajax event="dateSelect"  update="pnlDataVencimento pnlDataEmissao" />
+                                    </p:calendar>
+                                </p:panelGrid>
+
+                                <p:panelGrid id="pnlDataRecebimento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Data de Recebimento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:calendar locale="pt"  pattern="dd/MM/yyyy" disabled="true" value="#{financeiroController.financeiro.dataPagamento}" />                
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlUnidadeNegocio" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-2,ui-grid-col-6" > 
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Unidade de Negócio" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqUnidadeNegocio}" filter="true" filterMatchMode="contains" disabled="#{financeiroController.id}" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Empresa" itemValue="#{null}" />
+                                        <f:selectItems value="#{financeiroController.listaUnidadeNegocio}" var="un"  itemLabel="#{un.identificacao}" itemValue="#{un.seqUnidadeNegocio}" />
+                                        <p:ajax event="change" listener="#{financeiroController.buscarContratada()}" update="pnlCNPJ pnlRazao "/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid id="pnlCNPJ" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <div class="Fs16 gray FontRalewaySemiBold">CNPJ</div>
+                                    <p:outputLabel  value="#{financeiroController.unidadeNegocio.cnpj}"/>
+                                </p:panelGrid>
+                                <p:panelGrid id="pnlRazao" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <div class="Fs16 gray FontRalewaySemiBold">Razão Social Contratada</div>
+                                    <p:outputLabel  value="#{financeiroController.unidadeNegocio.nome}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-5,ui-grid-col-5,ui-grid-col-3"> 
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Centro de Custo" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqCentroCusto}" disabled="#{financeiroController.id}">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Centro de Custo" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaCentroCusto}" var="cs" itemLabel="#{cs.nome}" itemValue="#{cs.seqCentroCusto}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+                                <p:panelGrid id="pnlNatureza" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Categoria (Nível II)" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqTipoMovimento}" disabled="#{financeiroController.id}" filter="true" filterMatchMode="contains">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Natureza" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaTipoLancamento}" var="tp" itemLabel="#{tp.nome}" itemValue="#{tp.seqTipoMovimentoFinanceiro}"/>
+                                        <!--p:ajax event="change" update="pnlColaborador"/-->
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Documento Fiscal" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqDocumentoFiscal}" disabled="#{financeiroController.id}">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Documento Fiscal" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaDocumentoFiscal}" var="df" itemLabel="#{df.nome}" itemValue="#{df.seqDocumentoFiscal}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Número Documento" class="Fs16 gray FontRalewaySemiBold" />
+                                    <p:inputText value="#{financeiroController.financeiro.numeroDocFiscal}" disabled="#{financeiroController.id}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlParceiro" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <!--p:selectBooleanCheckbox itemLabel="Vincular Parceiro" value="#{financeiroController.vincularParceiro}">
+                                    <p:ajax event="change" update="pnlParceiro"/>
+                                </p:selectBooleanCheckbox-->
+                                <!--p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.vincularParceiro}"--> 
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Tipo de Parceiro" />
+                                        <p:selectOneMenu value="#{financeiroController.financeiro.seqTipoParceiro}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Selecione tipo Parceiro" itemValue="#{null}"/>
+                                        <f:selectItems value="#{painelParceiroController.listaTipoParceiro}" var="td"  itemLabel="#{td.nome}"  itemValue="#{td.seqTipoParceiro}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid-->
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Parceiro" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{financeiroController.financeiro.seqParceiro}" filter="true" filterMatchMode="contains" disabled="#{financeiroController.id}">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione Parceiro" itemValue="#{null}"/>
+                                            <f:selectItems value="#{financeiroController.listaParceiro}" var="p" itemLabel="#{p.nome} - #{p.tipoParceiro}" itemValue="#{p.seqParceiro}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlDocumento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:selectBooleanCheckbox  itemLabel="Vincular Documento" value="#{financeiroController.vincularDocumento}">
+                                    <p:ajax event="change" update="pnlDocumento"/>
+                                </p:selectBooleanCheckbox>
+
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.vincularDocumento}"> 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Tipo de Documento" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{financeiroController.tipoDocumentoSelecionado}" filter="true" filterMatchMode="contains" disabled="#{financeiroController.id}">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione Tipo de Documento" itemValue="#{null}"/>
+                                            <f:selectItem itemLabel="Boletim de Medição" itemValue="401"/>
+                                            <f:selectItem itemLabel="Lançamento de Faturamento" itemValue="LF"/>
+                                            <!--f:selectItems value="#{financeiroController.listaTipoDocumento}" var="tp" itemValue="#{tp.seqTipoDocumento}" itemLabel="#{tp.nome}"/-->
+                                            <p:ajax event="change" listener="#{financeiroController.listarDocumento()}" update="pnlDocumento"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText value="Documento" class="Fs16 gray FontRalewaySemiBold"/>
+                                        <p:selectOneMenu value="#{financeiroController.financeiro.seqDocumento}" disabled="#{financeiroController.id}" filter="true" filterMatchMode="contains" rendered="#{financeiroController.tipoDocumentoSelecionado eq '401'}">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione Documento" itemValue="#{null}"/>
+                                            <f:selectItems value="#{financeiroController.listaDocumento}" var="d" itemLabel="Nº.#{d.codigo} #{d.estadoBM} " itemValue="#{d.seqDocumento}" />
+                                            <!--f:selectItems value="#{financeiroController.listaDocumentoComplementar}" var="d" itemLabel="Nº.#{d.codigo} -  Complementar Nº.#{d.idComplementar}" itemValue="#{d.seqDocumento}" />
+                                            <f:selectItems value="#{financeiroController.listaDocumentoRevisado}" var="d" itemLabel="Nº.#{d.codigo} - Revisado Nº.#{d.idRevisao}" itemValue="#{d.seqDocumento}" /-->
+                                            <p:ajax event="change" listener="#{financeiroController.selecionarDocumento()}" update="pnlDocumento pnlValor quitacao frmDetalhe:pnlParceiro frmDetalhe:pnlNatureza"/>
+                                        </p:selectOneMenu>
+                                        <p:selectOneMenu value="#{financeiroController.financeiro.seqFinanceiroFaturamento}" disabled="#{financeiroController.id}" filter="true" filterMatchMode="contains" rendered="#{financeiroController.tipoDocumentoSelecionado eq 'LF'}">
+                                            <f:selectItem value="#{null}" itemLabel="Selecione Documento" itemValue="#{null}"/>
+                                            <f:selectItems value="#{financeiroController.listaFinanceiro}" var="lf" itemLabel="Nº.#{lf.seqFinanceiro} " itemValue="#{lf.seqFinanceiro}"/>
+                                            <p:ajax event="change" listener="#{financeiroController.selecionarDocumento()}" update="pnlDocumento pnlValor quitacao frmDetalhe:pnlParceiro frmDetalhe:pnlNatureza"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlValor" columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Valor Previsto" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:inputText value="#{financeiroController.financeiro.valor}" disabled="#{financeiroController.id}">
+                                        <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        <p:ajax event="keyup" update="quitacao"/>
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Forma de Pagamento" class="Fs16 gray FontRalewaySemiBold"/>
+                                    <p:selectOneMenu value="#{financeiroController.financeiro.seqFormaPagamento}" disabled="#{financeiroController.id}">
+                                        <f:selectItem value="#{null}" itemLabel="Selecione Forma de Pagamento" itemValue="#{null}"/>
+                                        <f:selectItems value="#{financeiroController.listaFormaPagamento}" var="fp" itemLabel="#{fp.nome}" itemValue="#{fp.seqFormaPagamento}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:accordionPanel id="quitacao" activeIndex="#{financeiroController.idAccordionPanel}">
+                                <p:tab title="Quitação">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Valor Previsto" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText value="#{financeiroController.financeiro.valor}" disabled="true">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid id="pnlTipoQuitacao" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Tipo de Quitação" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:selectOneMenu value="#{financeiroController.financeiroQuitacao.tipoQuitacao}" required="true" requiredMessage="Informe Tipo de Quitação" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}"/>
+                                                <f:selectItem itemLabel="Parcial" itemValue="PARCIAL"/>
+                                                <f:selectItem itemLabel="Total" itemValue="TOTAL"/>
+                                                <p:ajax event="change" update="quitacao"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Data da Quitação" class="Fs16 gray FontRalewaySemiBold" />
+                                            <p:calendar id="dataQuitacao" locale="pt" disabled="#{financeiroController.idEditarQuitacao  == 0}" pattern="dd/MM/yyyy"  value="#{financeiroController.financeiroQuitacao.dataPagamento}" />
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid id="pnlValores" columns="3" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Local Financeiro" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:selectOneMenu value="#{financeiroController.financeiroQuitacao.seqConta}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:selectItem value="#{null}" itemLabel="Selecione Local Financeiro" itemValue="#{null}"/>
+                                                <f:selectItems value="#{financeiroController.listaConta}" var="ct" itemLabel="#{ct.banco}" itemValue="#{ct.seqConta}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Desconto" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText value="#{financeiroController.financeiroQuitacao.valorDesconto}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                <p:ajax event="keyup" listener="#{financeiroController.calcularValorFinal(0)}" update="pnlValorRecebido"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Multa" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText value="#{financeiroController.financeiroQuitacao.valorMulta}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                <p:ajax event="keyup" listener="#{financeiroController.calcularValorFinal(0)}" update="pnlValorRecebido"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Juros" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText value="#{financeiroController.financeiroQuitacao.valorJuros}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                <p:ajax event="keyup" listener="#{financeiroController.calcularValorFinal(0)}" update="pnlValorR"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <h:outputText value="Outros Acréscimos" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText value="#{financeiroController.financeiroQuitacao.outrosAcrescimos}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                <p:ajax event="keyup" listener="#{financeiroController.calcularValorFinal(0)}" update="pnlValorRecebido"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid id="pnlAReceber" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiroQuitacao.tipoQuitacao eq 'PARCIAL'}"> 
+                                            <h:outputText value="Saldo a Receber" class="Fs16 gray FontRalewaySemiBold"/>
+                                            <p:inputText  value="#{financeiroController.financeiroQuitacao.valorParcial}" disabled="#{financeiroController.idEditarQuitacao  == 0}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                <p:ajax event="keyup" listener="#{financeiroController.calcularValorFinal(0)}" update="pnlValorRecebido"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid id="pnlAReceber2" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiroQuitacao.tipoQuitacao ne 'PARCIAL'}"/> 
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlValorRecebido" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <p:panelGrid id="pnlValorR" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiroQuitacao.tipoQuitacao ne 'PARCIAL'}"> 
+                                                <h:outputText value="Valor Recebido" class="Fs16 gray FontRalewaySemiBold" />
+                                                <p:inputText value="#{financeiroController.financeiroQuitacao.valorRecebido}" disabled="true">
+                                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                           <!-- <p:panelGrid id="pnlValorRestante" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{financeiroController.financeiroQuitacao.tipoQuitacao eq 'PARCIAL'}"> 
+                                                <h:outputText value="Valor Restante" class="Fs16 gray FontRalewaySemiBold" />
+                                                <h:outputText value="#{financeiroController.saldoRestante}">
+                                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                                </h:outputText>
+                                            </p:panelGrid>-->
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Responsável da Quitação" />
+                                                <h:outputText id="responsavelQuitacao"  value="#{financeiroController.financeiro.responsavelQuitacao}"/>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0"> 
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:commandButton value="Editar" disabled="#{financeiroController.idEditarQuitacao  == 1}" ajax="false" actionListener="#{financeiroController.editarQuitacao()}" update="quitacao" rendered="#{loginController.usuario.acFinContasReceber == 1}"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:commandButton value="Salvar" disabled="#{financeiroController.idEditarQuitacao == 0}" actionListener="#{financeiroController.salvarQuitacao(1)}" update="quitacao pnlValorRecebido frmDetalhe:pnlData" rendered="#{loginController.usuario.acFinContasReceber == 1}"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                                <p:commandButton value="Cancelar" disabled="#{financeiroController.idEditarQuitacao  == 0}" styleClass="RedButton" actionListener="#{financeiroController.cancelarQuitacao()}" update="quitacao" rendered="#{loginController.usuario.acFinContasReceber == 1}"/>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:tab>
+                            </p:accordionPanel>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                <p:separator />
+
+                                <h:outputText value="Descrição" class="Fs16 gray FontRalewaySemiBold"/>
+                                <p:inputTextarea counter="desc" disabled="#{financeiroController.id}" counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{financeiroController.financeiro.descricao}"/>
+                                <h:outputText id="desc"/>
+
+                                <p:separator/>
+
+                                <h:outputText value="Outras Informações" class="Fs16 gray FontRalewaySemiBold"/>
+                                <p:inputTextarea counter="outros" disabled="#{financeiroController.id}" counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{financeiroController.financeiro.outrasInformacoes}"/>
+                                <h:outputText id="outros"/>
+
+                                <p:separator/>
+
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Responsável"/>
+                                        <h:outputText value="#{financeiroController.financeiro.responsavel}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <h:outputText class="Fs16 gray FontRalewaySemiBold" value="Data de Lançamento"/>
+                                        <h:outputText value="#{financeiroController.financeiro.dataCadastro}">
+                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" />
+                                        </h:outputText> 
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                            <p:separator/>
+
+                            <p:messages id="messages"  autoUpdate="true" closable="true" rendered="#{financeiroController.tela == 1}"/>
+
+                            <p:panelGrid   columns="4"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{financeiroController.tela == 1}">
+                                <p:commandButton value="Salvar" actionListener="#{financeiroController.salvar(0,1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acFinContasReceber== 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{financeiroController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+
+                                <p:commandButton value="Cancelar" styleClass="RedButton" onclick="PF('motivoCancelamento').show();" rendered="#{financeiroController.financeiro.seqFinanceiro != null and loginController.usuario.acFinContasReceber == 1}" />
+
+
+                                <p:dialog id="motivoCancelamento" header="Motivo do Cancelamento" widgetVar="motivoCancelamento" modal="true" height="150" >
+                                    <p:inputTextarea id="lblComentario" value="#{financeiroController.financeiro.motivoCancelamento}" rows="6" cols="15" placeholder="Informe o Motivo do Cancelamento"/>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                        <p:commandButton value="Salvar"  actionListener="#{financeiroController.cancelar()}"  onclick="PF('motivoCancelamento').hide();" process="@this,lblComentario"/>
+                                        <p:commandButton value="Cancelar" onclick="PF('telaComentario').hide();"/>
+                                    </p:panelGrid>
+                                </p:dialog>
+
+<!--p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{financeiroController.deletar()}" rendered="#{financeiroController.financeiro.seqFinanceiro != null and loginController.usuario.acFinContasReceber == 1}" update=":frmDetalhe :frmLista">
+    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+</p:commandButton>
+
+<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+</p:confirmDialog-->                                                              
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>

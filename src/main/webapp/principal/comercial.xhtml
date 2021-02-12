@@ -1,0 +1,284 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/template.xhtml"
+                >
+
+    <ui:define name="head">
+
+        <style type="text/css">
+
+
+            .normal{
+                background: #5fcf80 !important; 
+                background-color: #5fcf80 !important; 
+                border-color: #5fcf80 !important;
+                color: white !important;
+            }
+
+            .moderado{
+                background: #F7941E !important; 
+                background-color: #F7941E !important; 
+                border-color: #F7941E !important;
+                color: white !important;
+            }
+
+            .urgente{
+                background: #D0525D !important;  
+                background-color: #D0525D !important; 
+                border-color: #D0525D !important; 
+                color: white !important;
+            }
+
+        </style>
+
+
+        <script type="text/javascript">
+            PrimeFaces.widget.Schedule.prototype._oldInit = PrimeFaces.widget.Schedule.prototype.init;
+            PrimeFaces.widget.Schedule.prototype.init = function (cfg) {
+                cfg.columnFormat = {
+                    month: 'ddd',
+                    week: 'ddd d/M',
+                    day: 'dddd d/M'
+                };
+
+                this._oldInit.apply(this, arguments);
+            };
+
+            PrimeFaces.locales['pt'] = {
+                closeText: 'Fechar',
+                prevText: 'Anterior',
+                nextText: 'Próximo',
+                currentText: 'Período Atual',
+                monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                weekHeader: 'Semana',
+                firstDay: 1,
+                isRTL: false,
+                showMonthAfterYear: false,
+                yearSuffix: '',
+                timeOnlyTitle: 'Só Horas',
+                timeText: 'Tempo',
+                hourText: 'Hora',
+                minuteText: 'Minuto',
+                secondText: 'Segundo',
+                ampm: false,
+                month: 'Mês',
+                week: 'Semana',
+                day: 'Dia',
+                allDayText: 'Todo Dia'
+            };
+
+
+        </script>
+        <f:metadata>
+            <f:viewAction  action="#{loginController.iniciarComercial()}" />
+        </f:metadata>
+
+
+    </ui:define>
+
+    <ui:define name="content">
+
+
+        <!-- BOX START -->
+        <div class="layout-portlets-box" >
+
+            <div class="ContainerIndent"> 
+
+                <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                <div class="Container60 Responsive100">
+                    <div class="ContainerIndent">
+                        <div class="Container100 TexAlCenter">
+
+                            <div class="DispInlBlock  MarTop20">
+                                <i class="fa fa-money Fs40 cor MarRight10"></i>
+
+                                <div class="Fright">
+                                    <h2 class="black Fs24 FontRalewayMedium">Comissão</h2>
+                                    <span class="Fs15 gray FontRalewayRegular DispBlock">Resultado do seu empenho e dedicação!</span>
+                                </div>
+                            </div>
+                            <div class="Seperator"></div>
+                            <div class="Container100">
+
+
+                                <div class="Container100 MarTop20">
+
+                                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-2,ui-grid-col-2,ui-grid-col-2">
+                                        <h:outputText value="Descrição"  />
+                                        <h:outputText value="Previsão de Pagamento" />
+
+                                        <h:outputText value="Dt. Pagamento" />
+                                        <h:outputText value="Valor (R$)"/>
+
+                                    </p:panelGrid>
+                                    <p:separator/>
+                                    <p:separator/>
+
+                                    <c:forEach items="${loginController.listaComissao}" var="tp"  varStatus="status">
+                                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-2,ui-grid-col-2,ui-grid-col-2">
+                                            <h:outputText value="#{tp.descricao}"  style="text-align: left" class="cor"/>
+                                            <h:outputText value="#{tp.dataPrevBaixa}" class="cor">
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                            </h:outputText>
+                                            <h:outputText value="#{tp.dataBaixa}" class="cor">
+                                                <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                            </h:outputText>
+
+
+                                            <h:outputText value="#{tp.valor}" class="green" rendered="#{tp.operacao == 'Crédito'}">
+                                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            </h:outputText>
+
+                                            <h:outputText  value="#{tp.valor}" class="red" rendered="#{tp.operacao == 'Débito'}" style="text-align: right">
+                                                <f:convertNumber locale="pt_BR" pattern="-#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            </h:outputText>
+
+                                        </p:panelGrid>
+                                        <p:separator/>
+
+
+
+
+                                    </c:forEach>
+
+                                </div>                                    
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+                <h:form id="frmAgenda" >
+
+                    <div class="Container40 Responsive100">
+                        <div class="ContainerIndent">
+                            <div class="Container100 TexAlCenter">
+
+                                <div class="DispInlBlock TexAlLeft MarTop20">
+                                    <i class="fa fa-calendar Fs40 cor Fleft MarRight10"></i>
+                                    <div class="Fleft">
+                                        <h2 class="black Fs24 FontRalewayMedium">Agenda de Trabalho</h2>
+                                        <span class="Fs15 gray FontRalewayRegular DispBlock">Não se esqueça de nada, agende aqui!</span>
+                                    </div>
+                                </div>
+
+                                <div class="Seperator"></div>
+
+                                <div class="Wid100 Fleft">
+                                    <p:schedule id="schedule"  value="#{agendaController.eventModel}" widgetVar="myschedule" timeZone="GMT-3" locale="pt">
+
+                                        <p:ajax event="dateSelect" listener="#{agendaController.novo}" update=":frmDetalhe" oncomplete="PF('eventDialog').show();"/>
+                                        <p:ajax event="eventSelect" listener="#{agendaController.selecionar}" update=":frmDetalhe" oncomplete="PF('eventDialog').show();"/>
+                                        <p:ajax event="eventMove" listener="#{agendaController.onEventMove}" />
+                                        <p:ajax event="eventResize" listener="#{agendaController.onEventResize}" />
+                                    </p:schedule>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                                        
+
+                </h:form>
+
+            </div>
+        </div>     
+
+        <div class="Container100 ui-fluid">
+            <div class="ContainerIndent"> 
+                <p:dialog width="50%"  appendTo="@(body)" modal="true" id="eventDialog1" widgetVar="eventDialog" header="Detalhe do Agendamento" showEffect="clip" hideEffect="clip">
+
+                    <div class="Container100 ui-fluid">
+                        <div class="ContainerIndent"> 
+                            <h:form id="frmDetalhe" >
+
+                                <p:panelGrid id="eventDetails" columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel for="title" value="Assunto" />
+                                            <p:inputText id="title" value="#{agendaController.event.title}" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel value="Prioridade" />
+                                            <p:selectOneMenu value="#{agendaController.event.cor}" >
+                                                <f:selectItem itemLabel="Normal" itemValue="Normal"/>
+                                                <f:selectItem itemLabel="Moderado" itemValue="Moderado"/>
+                                                <f:selectItem itemLabel="Urgente" itemValue="Urgente"/>
+                                            </p:selectOneMenu>
+
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-5,ui-grid-col-5,ui-grid-col-10">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel for="from" value="Início" />
+                                            <p:calendar id="from" value="#{agendaController.event.startDate}" timeZone="GMT-3" pattern="dd/MM/yyyy HH:mm" locale="pt"/>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel for="to" value="Até" />
+                                            <p:calendar id="to" value="#{agendaController.event.endDate}" timeZone="GMT-3" pattern="dd/MM/yyyy HH:mm" locale="pt"/>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel for="to" value="Tipo de Agendamento" />
+                                            <p:selectOneMenu value="#{agendaController.event.seqTipoAgenda}" filter="true" filterMatchMode="contains">
+                                                <f:selectItem itemLabel="Nenhum Tipo Selecionado" itemValue="#{null}" />
+                                                <f:selectItems value="#{agendaController.listaTipoAgenda}" var="ta"  itemLabel="#{ta.nome}" itemValue="#{ta.seqTipoAgenda}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <h:outputText value="Parceiro" />
+                                            <p:selectOneMenu value="#{agendaController.event.seqParceiro}" filter="true" filterMatchMode="contains">
+                                                <f:selectItem itemLabel="Nenhum Parceiro Selecionado" itemValue="#{null}" />
+                                                <f:selectItems value="#{agendaController.listaParceiro}" var="par"  itemLabel="#{par.nome}" itemValue="#{par.seqParceiro}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:outputLabel value="Descrição"/>
+                                            <p:editor value="#{agendaController.event.description}"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" >
+                                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" >
+                                            <p:commandButton value="Fechar" oncomplete="PF('eventDialog').hide();"/>
+                                            <p:commandButton value="Salvar" actionListener="#{agendaController.salvar}" oncomplete="PF('eventDialog').hide();">
+                                                <p:ajax event="click" update=":frmAgenda"/>
+                                            </p:commandButton>
+                                            <p:commandButton value="Deletar" actionListener="#{agendaController.deletar}" oncomplete="PF('eventDialog').hide();" rendered="#{agendaController.event.id != null}">
+                                                <p:ajax event="click" update=":frmAgenda"/>
+                                            </p:commandButton>
+
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </h:form>
+                        </div>
+                    </div>
+                </p:dialog>    
+            </div>
+        </div>
+
+    </ui:define>
+
+</ui:composition>

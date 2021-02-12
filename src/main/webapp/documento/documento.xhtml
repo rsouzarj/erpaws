@@ -1,0 +1,1079 @@
+   <ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+        </style>
+        <style>
+            #tabs li.ui-state-disabled {
+                display: none;
+
+            }
+            .ui-tabs .ui-tabs-panel {background-color: red; border-width: 0; padding: 1em 1.4em; background: none; }                
+
+        </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <f:metadata>
+            <f:viewParam name="idTipoDocumento" value="#{documentoController.idTipoDocumento}" />
+            <f:viewParam name="idDocumento" value="#{documentoController.idDocumento}" />
+            <f:viewAction  action="#{documentoController.carregarTelaDocumento()}" />
+        </f:metadata>
+
+    </ui:define>
+
+    <ui:define name="content">
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                    <h:form id="frmPrincipal" enctype="multipart/form-data">
+                        <!--p:growl id="growl" showDetail="true" sticky="true" /--> 
+
+                        <p:panelGrid   columns="6"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-2,ui-grid-col-2,ui-grid-col-2" >
+                            <p:panelGrid   columns="1"  layout="grid" styleClass="ui-panelgrid-blank"  >
+                                <h2>Nº.: #{documentoController.documento.codigo} - #{documentoController.tipoDocumento.nome} </h2>
+                                <p:outputLabel value="Revisado nº #{documentoController.documento.idRevisao}" rendered="#{documentoController.documento.idRevisao != null and documentoController.documento.idRevisao > 0}" />
+                                <p:outputLabel value="Complementar nº #{documentoController.documento.idComplementar}" rendered="#{documentoController.documento.idComplementar != null and documentoController.documento.idComplementar > 0 }"/>
+                                <p:outputLabel value="Revisado nº #{documentoController.documento.sequencia}" rendered="#{documentoController.documento.sequencia != null and documentoController.documento.sequencia > 0 }"/>
+
+                                <p:commandLink value="Origem: Nº.: #{documentoController.documento.docDonoCodigo} - #{documentoController.documento.docDonoTipo} "  actionListener="#{documentoController.abrirDocumentoDono()}" target="_blank" immediate="true" ajax="false" rendered="#{documentoController.documento.seqDocumentoDono != null}"/>
+
+                                <p:menuButton value="#{documentoController.documento.etapa}" rendered="#{documentoController.documento.seqDocumento > 0 }" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or (loginController.usuario.acDocNovo != 1 and documentoController.idTipoDocumento ne '401')}">
+                                    <c:forEach items="${documentoController.listaDocumentoEtapa}" var="tp">
+                                        <p:menuitem icon="fa fa-arrow-right cor" value="#{tp.nome}" rendered="#{tp.nome != documentoController.documento.etapa}" actionListener="#{documentoController.enviarParaProximaEtapa(tp)}"/>
+                                    </c:forEach>
+                                </p:menuButton> 
+
+                                <p:commandLink value="Motivo do Cancelamento" immediate="true" rendered="#{(documentoController.documento.etapa eq 'Rejeitado' or documentoController.documento.etapa eq 'Cancelada') and documentoController.documento.comentarioEtapa != null}" onclick="PF('telaComentario').show();"/>
+                            </p:panelGrid>
+
+                            <p:commandButton value="Boleto" actionListener="#{documentoController.imprimirBoleto()}" immediate="true" ajax="false" onclick="this.form.target = '_blank'" rendered="#{documentoController.bFinanceiro}"/>
+                            <p:panelGrid   columns="1"  layout="grid" styleClass="ui-panelgrid-blank" rendered="#{!documentoController.bFinanceiro}"/>
+
+                            <p:menuButton value="Gerar" rendered="#{documentoController.documento.seqDocumento > 0}" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or (loginController.usuario.acDocNovo != 1 and documentoController.idTipoDocumento ne '401')}">
+                                <c:forEach items="${documentoController.listaTipoDocumentoGerar}" var="td">
+                                    <p:menuitem icon="fa fa-arrow-right cor" value="#{td.tipoDocumentoFilho}" ajax="false" actionListener="#{documentoController.gerarNovoDocumento(td)}" target="_blank" process="@this,mnParceiro" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                                </c:forEach>
+                                <p:menuitem icon="fa fa-arrow-right cor" value="Complementar" ajax="false"  actionListener="#{documentoController.gerarNovo(0)}" target="_blank" process="@this,mnParceiro"  rendered="#{documentoController.idTipoDocumento eq '401' and  loginController.usuario.acFinBoletim == 1}"/>
+                                <p:menuitem icon="fa fa-arrow-right cor" value="Revisado" ajax="false" actionListener="#{documentoController.gerarNovo(1)}" target="_blank" process="@this,mnParceiro" rendered="#{documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim == 1}"/>                                   
+                                <p:menuitem icon="fa fa-arrow-right cor" value="Revisado" actionListener="#{documentoController.gerarNovo(3)}" ajax="false"  target="_blank" process="@this,mnParceiro"  rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                            </p:menuButton>      
+
+                            <p:commandButton value="Salvar" actionListener="#{documentoController.salvar(0)}" update=":frmPrincipal" rendered="#{(loginController.usuario.acDocNovo == 1 and documentoController.documento.etapa != 'Rejeitado' and documentoController.idTipoDocumento ne '401') or (loginController.usuario.acFinBoletim == 1 and documentoController.documento.etapa != 'Rejeitado' and documentoController.idTipoDocumento eq '401')}"/>
+                            
+                            <p:commandButton value="Imprimir" actionListener="#{documentoController.imprimir()}" rendered="#{documentoController.documento.seqDocumento > 0}"  immediate="true" ajax="false"  onclick="this.form.target = '_blank'"/>
+                            <p:commandButton value="Cancelar" id="btnCancelar" styleClass="RedButton"  onclick="PF('telaComentario').show();"  rendered="#{(documentoController.documento.seqDocumento>0 and loginController.usuario.acDocNovo == 1 and documentoController.idTipoDocumento ne '401') or (documentoController.documento.seqDocumento>0 and loginController.usuario.acFinBoletim == 1 and documentoController.idTipoDocumento eq '401')}" process="@this,telaComentario"/>
+                            <!--p:commandButton value="Cancelar" id="btnCancelarBM" styleClass="RedButton"  onclick="PF('telaComentario').show();"  rendered="#{documentoController.documento.seqDocumento>0 and loginController.usuario.acFinBoletim == 1 and documentoController.idTipoDocumento eq '401'}" process="@this,telaComentario"/-->
+                            <!--p:commandButton value="Cancelar" id="btnCancelar" styleClass="RedButton"  onclick="PF('telaComentario').show();"  rendered="#{documentoController.documento.seqDocumento>0 and loginController.usuario.acDocNovo == 1 and (documentoController.idTipoDocumento eq '401' or documentoController.idTipoDocumento eq '301')}" process="@this,telaComentario"/-->
+
+                            <!--p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{documentoController.deletar()}" rendered="#{documentoController.documento.seqDocumento>0 and loginController.usuario.acDocNovo == 1}" update=":frmPrincipal"-->
+                            <!--p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{documentoController.deletar()}" rendered="#{documentoController.documento.seqDocumento>0 and loginController.usuario.acDocNovo == 1 and (documentoController.idTipoDocumento ne '401' and documentoController.idTipoDocumento ne '301')}" update=":frmPrincipal">
+                                <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                            </p:commandButton-->
+
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                            </p:confirmDialog>                                                              
+
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-9,ui-grid-col-0,ui-grid-col-0,ui-grid-col-3" >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">Parceiro</div>
+                                <p:selectOneMenu id="mnParceiro" value="#{documentoController.documento.seqParceiro}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[PARCEIRO] é Obrigatório"   >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione um Parceiro" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaParceiro}" var="pa"  itemLabel="#{pa.nome} - #{pa.tipoParceiro}" itemValue="#{pa.seqParceiro}" />
+                                    <p:ajax event="change" listener="#{documentoController.listarDetalheParceiro()}" update=":frmPrincipal pnlRequisitanteServico pnlPessoaContato"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Nº Contrato</div>
+                                <p:inputText value="#{documentoController.documento.nContrato}" disabled="#{documentoController.documento.seqDocumentoDono != null and documentoController.idTipoDocumento ne '401'}" />
+                            </p:panelGrid>                            
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Data de Cadastro</div>
+                                <p:inputMask mask="99/99/9999" value="#{documentoController.documento.dataCadastro}" disabled="true">
+                                    <f:convertDateTime locale="pt_BR" pattern="dd/MM/yyyy"/>
+                                </p:inputMask>
+                                
+                                 <h:outputText value="Data de Emissão" class="Fs16 gray FontRalewaySemiBold" />
+                                    <p:calendar locale="pt"    pattern="dd/MM/yyyy"  value="#{documentoController.documento.data}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0" rendered="#{documentoController.idTipoDocumento eq '401'}"/> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0" rendered="#{documentoController.idTipoDocumento eq '301' or documentoController.idTipoDocumento eq '381'}"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Prev. Conclusão</div>
+                                <p:inputMask mask="99/99/9999" value="#{documentoController.documento.dataPrevisaoConclusao}"  >
+                                    <f:convertDateTime locale="pt_BR"  pattern="dd/MM/yyyy"/>
+                                </p:inputMask>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid id="pnlContratada" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-2,ui-grid-col-6"   >
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">Unidade de Negócio</div>
+                                <p:selectOneMenu value="#{documentoController.unidadeNegocio.seqUnidadeNegocio}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[Unidade de Negócio] é obrigatório" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaUnidadeNegocio}" var="un"  itemLabel="#{un.identificacao}" itemValue="#{un.seqUnidadeNegocio}" />
+                                    <p:ajax event="change" listener="#{documentoController.buscarContratada()}" update="pnlCNPJ pnlRazao"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <!--p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">CNPJ Contratada</div>
+                                <p:selectOneMenu value="#{documentoController.unidadeNegocio.seqUnidadeNegocio}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[CNPJ CONTRATADA] é obrigatório" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione Contratada" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaUnidadeNegocio}" var="un"  itemLabel="#{un.cnpj} (#{un.nome})" itemValue="#{un.seqUnidadeNegocio}" />
+                                    <p:ajax event="change" listener="#{documentoController.buscarContratada()}" update="pnlRazao"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid-->
+                                <!--p:inputMask id="lblCnpj" value="#{documentoController.unidadeNegocio.cnpj}" mask="99.999.999/9999-99" />
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <br/>
+                                <p:commandButton id="btnPesquisar"   actionListener="#{documentoController.buscarContratada()}" title="Buscar" icon="fa fa-search white" update="pnlRazao" process="@this,lblCnpj" />
+                            </p:panelGrid-->
+                            <p:panelGrid id="pnlCNPJ" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">CNPJ</div>
+                                <p:outputLabel  value="#{documentoController.unidadeNegocio.cnpj}"/>
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlRazao" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Razão Social</div>
+                                <p:outputLabel id="lblRazaoContratada" value="#{documentoController.unidadeNegocio.nome}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank">
+                            <p:panelGrid id="pnlRequisitanteServico" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '301'}"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Requisitante do Serviço</div>
+                                <p:selectOneMenu value="#{documentoController.documento.seqParceiroContato}" filter="true" filterMatchMode="contains" required="#{documentoController.idTipoDocumento eq '381'}" requiredMessage="[REQUISITANTE] é obrigatório" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione um Requisitante" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaParceiroContato}" var="pc"  itemLabel="#{pc.nome} - #{pc.info}" itemValue="#{pc.seqParceiroContato}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '401'}" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">Origem do Cliente</div>
+                                <p:selectOneMenu id="mnOrigemCliente" value="#{documentoController.documento.origemParceiro}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[ORIGEM DO CLIENTE] é Obrigatório" >
+                                    <f:selectItem itemLabel="Selecione a Origem do Cliente" itemValue="#{null}" />
+                                    <f:selectItem itemLabel="Nacional" itemValue="#{0}" />
+                                    <f:selectItem itemLabel="Exterior" itemValue="#{1}" />
+                                    <p:ajax event="change" listener="#{documentoController.selecionarOrigem()}" update="retencaoISSQN pnlISSQN pnlAliquotaRetencoesFederais"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlPessoaContato" columns="1" styleClass="ui-panelgrid-blank" layout="grid" rendered="#{documentoController.idTipoDocumento eq '381'}"> 
+                                <div class="Fs16 gray FontRalewaySemiBold">Pessoa de Contato a Pagar</div>
+                                <p:selectOneMenu value="#{documentoController.documento.seqParceiroContaPagar}" filter="true" filterMatchMode="contains" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione uma Pessoa de Contato" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaParceiroContato}" var="pc"  itemLabel="#{pc.nome} - #{pc.info}" itemValue="#{pc.seqParceiroContato}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.listaEquipamento.size() > 0}">
+
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.listaEquipamento.size() > 0}">
+                                <h4>Equipamento</h4>
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectManyCheckbox value="#{documentoController.equipamentoSelecionado}" layout="responsive" columns="3">
+                                        <f:selectItems value="#{documentoController.listaEquipamento}" var="e" itemLabel="#{e.nome}" itemValue="#{e.seqEquipamento}" />
+                                    </p:selectManyCheckbox>            
+                                </p:panelGrid>            
+                            </p:panelGrid>            
+                        </p:panelGrid>            
+
+                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.listaNvEmbarcacaoParceiro.size() > 0}">
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.listaNvEmbarcacaoParceiro.size() > 0}">
+                                <h4>Embarcação</h4>
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:selectManyCheckbox value="#{documentoController.embarcacaoSelecionado}" layout="responsive" columns="3" >
+                                        <f:selectItems value="#{documentoController.listaNvEmbarcacaoParceiro}" var="b" itemLabel="#{b.nvEmbarcacaoNome}" itemValue="#{b.seqEmbarcacao}" />
+                                    </p:selectManyCheckbox>            
+                                </p:panelGrid>            
+                            </p:panelGrid>            
+                        </p:panelGrid>            
+
+
+                            <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '282'}"> 
+                            <h:outputText value="Lista de Planos"/>
+                            <p:selectOneMenu value="#{documentoController.documento.identificacaoListaPlanos}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[Lista de planos] é obrigatório">
+                                <f:selectItem value="#{null}" itemLabel="Selecione Lista de Planos" itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaPlanoItem}" var="lp"  itemLabel="#{lp.identificacaoLista}" itemValue="#{lp.identificacaoLista}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid-->
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bPontoServico}"> 
+                            <h:outputText value="Ponto de Serviço"/>
+                            <p:selectOneMenu value="#{documentoController.documento.seqLugar}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[PONTO DE SERVIÇO] é obrigatório">
+                                <f:selectItem value="#{null}" itemLabel="Selecione o Ponto de Serviço" itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaLugar}" var="lg"  itemLabel="#{lg.nome}" itemValue="#{lg.seqLugar}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '381'}"> 
+                            <h:outputText value="Local de Prestação do Serviço (Município)"/>
+                            <p:inputText value="#{documentoController.documento.localServico}"/>
+                        </p:panelGrid>
+
+                        <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bTipoMovimentoFin}"> 
+                            <h:outputText value="Tipo de Movimento"/>
+                            <p:selectOneMenu value="#{documentoController.documento.seqTipoMovimentoFinanceiro}" filter="true" filterMatchMode="contains"  required="false" requiredMessage="[FORMA DE PAGAMENTO] é Obrigatório"  >
+                                <f:selectItem value="#{null}" itemLabel="Selecione a Tipo de Movimento " itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaTipoMovimentoFinanceiro}" var="tm"  itemLabel="#{tm.nome} " itemValue="#{tm.seqTipoMovimentoFinanceiro}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid-->
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bFinanceiro and documentoController.idTipoDocumento ne '381'}"> 
+                            <h:outputText value="Valor"/>
+                            <p:inputText value="#{documentoController.documentoItemFinanceiro.valor}" required="FALSE" requiredMessage="[VALOR] é obrigatório">
+                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                            </p:inputText>            
+                        </p:panelGrid>
+
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bFinanceiro  and documentoController.idTipoDocumento ne '381'}"> 
+                            <h:outputText value="Previsão de Baixa"/>
+                            <p:inputMask mask="99/99/9999" value="#{documentoController.documento.dataPrevisaoConclusao}" required="true" requiredMessage="[PREVISÃO DE BAIXA] é obrigatório">
+                                <f:convertDateTime locale="pt_BR" dateStyle="long" pattern="dd/MM/yyyy" timeZone="GMT-3"/>
+                            </p:inputMask>
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlFormaPagamento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bFormaPagamento}"> 
+                            <h:outputText value="Forma de Pagamento"/>
+                            <p:selectOneMenu value="#{documentoController.documento.seqFormaPagamento}" filter="true" filterMatchMode="contains"  required="false" requiredMessage="[FORMA DE PAGAMENTO] é Obrigatório"  >
+                                <f:selectItem value="#{null}" itemLabel="Selecione a Forma de Pagamento" itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaFormaPagamento}" var="p"  itemLabel="#{p.nome} " itemValue="#{p.seqFormaPagamento}" />
+                                <p:ajax event="change" listener="#{documentoController.selecionaConta('0')}" update="pnlConta"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlMoeda" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '301'}"> 
+                            <h:outputText value="Moeda Origem"  />
+                            <p:selectOneMenu value="#{documentoController.documento.moeda}">
+                                <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                <f:selectItem itemLabel="Real" itemValue="R$" />
+                                <f:selectItem itemLabel="Dólar" itemValue="US$" />
+                                <f:selectItem itemLabel="Euro" itemValue="€" />
+                                <p:ajax event="change" update="pnlConta listaMaterial pnlTaxaCambio" listener="#{documentoController.verificarMoeda()}" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                            </p:selectOneMenu>
+                            <h:outputText value="Moeda Destino" rendered="#{documentoController.idTipoDocumento eq '401'}" />
+                            <p:selectOneMenu value="#{documentoController.documento.moedaDestino}" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                <f:selectItem itemLabel="Real" itemValue="R$" />
+                                <f:selectItem itemLabel="Dólar" itemValue="US$" />
+                                <f:selectItem itemLabel="Euro" itemValue="€" />
+                                <p:ajax event="change" update="pnlConta listaMaterial pnlTaxaCambio" listener="#{documentoController.verificarMoeda()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlConta" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bConta}"> 
+
+                            <!--h:outputText value="Moeda"  rendered="#{documentoController.idTipoDocumento ne '301'}"/>
+                            <p:selectOneMenu value="#{documentoController.documento.moeda}"  rendered="#{documentoController.idTipoDocumento ne '301'}">
+                                <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                <f:selectItem itemLabel="Real" itemValue="R$" />
+                                <f:selectItem itemLabel="Dólar" itemValue="US$" />
+                                <f:selectItem itemLabel="Euro" itemValue="€" />
+                                <p:ajax event="change" update="pnlConta"/>
+                            </p:selectOneMenu-->
+
+                            <h:outputText value="Conta" rendered="#{documentoController.documento.seqFormaPagamento eq '83' or documentoController.documento.seqFormaPagamento eq '82'}"/>
+                            <p:selectOneMenu value="#{documentoController.documento.seqConta}" filter="true" filterMatchMode="contains"  required="false" requiredMessage="[CONTA] é Obrigatório" rendered="#{documentoController.documento.seqFormaPagamento eq '83' or documentoController.documento.seqFormaPagamento eq '82'}"  >
+                                <f:selectItem value="#{null}" itemLabel="Selecione a Conta" itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaConta}" var="c"  itemLabel="#{c.nome} " itemValue="#{c.seqConta}" />
+                                <p:ajax event="change" listener="#{documentoController.selecionaConta(documentoController.documento.seqConta)}"  update="pnlConta"/>
+                            </p:selectOneMenu>
+
+                            <h:outputText value="Tarifa Bancária" rendered="#{documentoController.documento.seqFormaPagamento.equals('83') and documentoController.idTipoDocumento eq '401'}"/>
+                            <h:outputText value="#{documentoController.documento.tarifaBancaria.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.seqFormaPagamento.equals('83') and documentoController.idTipoDocumento eq '401' and documentoController.documento.moeda eq '€'}">
+                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                            </h:outputText>
+                            <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.tarifaBancaria)}" rendered="#{documentoController.documento.seqFormaPagamento.equals('83') and documentoController.idTipoDocumento eq '401' and documentoController.documento.moeda ne '€'}">
+                                <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                            </h:outputText>
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlCondicaoPagamento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bCondicaoPagamento}"> 
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <h:outputText value="Condição de Pagamento"/>
+                                    <p:selectOneMenu value="#{documentoController.documento.seqCondicaoPagamento}" filter="true" filterMatchMode="contains"  required="false" requiredMessage="[FORMA DE PAGAMENTO] é Obrigatório"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione a Condição de Pagamento" itemValue="#{null}" />
+                                        <f:selectItems value="#{documentoController.listaCondicaoPagamento}" var="cp"  itemLabel="#{cp.nome} " itemValue="#{cp.seqCondicaoPagamento}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                    <h:outputText value="Natureza Lançamento"/>
+                                    <p:selectOneMenu value="#{documentoController.naturezaLancamento}" filter="true" filterMatchMode="contains"  required="false" requiredMessage="[NATUREZA] é Obrigatório"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                        <f:selectItem itemLabel="Nível 1" itemValue="Nível 1" />
+                                        <f:selectItem itemLabel="Nível 2" itemValue="Nível 2" />
+                                        <p:ajax event="change" listener="#{documentoController.buscarTipoMovimentoFinanceiro()}" update="pnlTipoMovimentoFinanceiro"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid-->
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '401'}" /> 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '401'}"> 
+                                    <h:outputText value="Categoria (Nível II)"/>
+                                    <p:selectOneMenu value="#{documentoController.documento.seqTipoMovimentoFinanceiro}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[Categoria Nível II] é Obrigatório"  >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                        <f:selectItems value="#{documentoController.listaTipoMovimentoFinanceiro}" var="mf"  itemLabel="#{mf.nome}" itemValue="#{mf.seqTipoMovimentoFinanceiro}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Quantidade de Parcelas"/>
+                                    <p:spinner id="minMax" value="#{documentoController.documento.qtdeParcela}" min="0" max="12" style="width: 100px;"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <h:outputText value="Dias do Pagamento"/>
+                                    <p:inputText value="#{documentoController.documento.datasParcelado}" placeholder="Ex: 21/05; 21/06 ..."/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '381' or documentoController.idTipoDocumento eq '401' }"> 
+                            <h:outputText value="Tributos / Impostos"/>
+                            <p:selectOneRadio id="mnTributos" value="#{documentoController.documento.tributosImpostos}" required="true" requiredMessage="[TRIBUTOS/IMPOSTOS] é Obrigatório">
+                                <f:selectItem itemLabel="Incluído" itemValue="#{1}" />
+                                <f:selectItem itemLabel="Não incluído" itemValue="#{0}" />
+                                <p:ajax event="change" update="pnlISSQN"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlISSQN" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                            <p:panelGrid id="retencaoISSQN" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="Retenção de ISSQN"/>
+                                <p:selectOneMenu id="mnRetencaoIssqn" value="#{documentoController.documento.retencaoISSQN}" required="true" requiredMessage="[RENTENÇÃO DE ISSQN] é Obrigatório">
+                                    <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                    <f:selectItem itemLabel="Sim" itemValue="#{0}" />
+                                    <f:selectItem itemLabel="Não" itemValue="#{1}" />
+                                    <p:ajax event="change" listener="#{documentoController.aliquotaIssqnRetido()}" update="pnlISSQN"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlAliquotaRetido" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.documento.retencaoISSQN == 0 or documentoController.documento.origemParceiro == 0}">
+                                <h:outputText value="Alíquota ISSQN Retido"/>
+                                <p:selectOneMenu id="mnAliquotaRetido" value="#{documentoController.documento.aliquotaISSQNretido}" required="true" requiredMessage="[ALÍQUOTA ISSQN RETIDO] é Obrigatório">
+                                    <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                    <f:selectItem itemLabel="0,00%" itemValue="#{0}" />
+                                    <f:selectItem itemLabel="0,50%" itemValue="#{0.50}" />
+                                    <f:selectItem itemLabel="1,00%" itemValue="#{1}" />
+                                    <f:selectItem itemLabel="1,50%" itemValue="#{1.50}" />
+                                    <f:selectItem itemLabel="2,00%" itemValue="#{2}" />
+                                    <f:selectItem itemLabel="2,50%" itemValue="#{2.50}" />
+                                    <f:selectItem itemLabel="3,00%" itemValue="#{3}" />
+                                    <f:selectItem itemLabel="3,50%" itemValue="#{3.50}" />
+                                    <f:selectItem itemLabel="4,00%" itemValue="#{4}" />
+                                    <f:selectItem itemLabel="4,50%" itemValue="#{4.50}" />
+                                    <f:selectItem itemLabel="5,00%" itemValue="#{5}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid id="pnlProjecaoTributaria" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.documento.tributosImpostos == 0}">
+                                <h:outputText value="Projeção Tributária" />
+                                <p:selectOneMenu id="mnProjecao" value="#{documentoController.documento.seqProjecaoTributaria}" required="true" requiredMessage="[PROJEÇÃO TRIBUTÁRIA] é Obrigatório">
+                                    <f:selectItems value="#{documentoController.listaProjecaoTributaria}" var="pt" itemLabel="#{pt.nome}-#{pt.percentual}%" itemValue="#{pt.seqProjecaoTributaria}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="pnlAliquotaRetencoesFederais" columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <h:outputText value="Aliquota de Retenções Federais"/>
+                                <p:selectOneMenu id="mnAliquotaFederais" value="#{documentoController.documento.seqAliquotaFederal}" disabled="#{documentoController.documento.origemParceiro eq '1'}" required="true" requiredMessage="[ALIQUOTA DE RETENÇÕES FEDERAIS] é Obrigatório">
+                                    <f:selectItem value="#{null}" itemLabel="Selecione" itemValue="#{null}" />
+                                    <f:selectItems value="#{documentoController.listaAliquotaRetencaoFederal}" var="pt" itemLabel="#{pt.nome} - #{pt.percentual}%" itemValue="#{pt.seqAliquota}" />
+                                    <p:ajax event="change" listener="#{documentoController.verificarOrigem()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                            <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <h:outputText value="Grupo de Serviço Principal"/>
+                                <p:selectOneMenu value="#{documentoController.documento.grupoServico}" filter="true" filterMatchMode="contains" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione um Grupo de Serviço Principal" itemValue="#{null}" />
+                                    <f:selectItem itemLabel="Todos" itemValue="todos" />
+                                    <f:selectItems value="#{documentoController.listaMaterialReferencia}" var="p"  itemLabel="#{p.referencia}" itemValue="#{p.referencia}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid-->
+
+                            <p:panelGrid id="pnlTaxaCambio" columns="1" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-2">
+                                <h:outputText value="Taxa de Câmbio"/>
+                                <p:inputText value="#{documentoController.documento.taxaCambio}" disabled="#{documentoController.documento.moeda eq documentoController.documento.moedaDestino}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                    <p:ajax event="change" update="pnlTaxaCambio"/>
+                                </p:inputText>
+                            </p:panelGrid>
+
+                        </p:panelGrid>
+
+                        <p:separator rendered="#{documentoController.idTipoDocumento eq '381'}"/>
+
+                        <p:panelGrid id="pnlComReembolso" columns="1" layout="grid" rendered="#{documentoController.idTipoDocumento eq '381'}">
+                            <h:outputText value="Reembolsos de Despesas"/>                          
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-4,ui-grid-col-4" >
+                                <p:selectBooleanCheckbox value="#{documentoController.documento.reembolsoTransporte}" itemLabel="Transporte/Deslocamento"/>
+                                <p:selectBooleanCheckbox value="#{documentoController.documento.reembolsoHospedagem}" itemLabel="Hospedagem"/>
+                                <p:selectBooleanCheckbox value="#{documentoController.documento.reembolsoAlimentacao}" itemLabel="Alimentação"/>
+                                <p:selectBooleanCheckbox value="#{documentoController.documento.reembolsoPlotagens}" itemLabel="Plotagens"/>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-2,ui-grid-col-4" >
+                                    <p:outputLabel value="Outros:"/>
+                                    <p:inputText value="#{documentoController.documento.reembolsoOutros}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panelGrid> 
+
+                        <p:separator/>
+                        
+                         <h:outputText value="Escopo Técnico" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                         <p:inputTextarea counter="Escopo" counterTemplate="{0} caracteres restantes." maxlength="4000"  value="#{documentoController.documento.escopo}"/>
+                         <h:outputText id="Escopo"/>
+
+                     
+                        
+                        
+                        
+                        
+                       <!-- <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '401'}"> editor
+                         <h:outputText value="Escopo Técnico" />
+                         <p:editor width="900" height="400" value="#{documentoController.documento.escopo}" />                
+                      </p:panelGrid>-->
+
+                            <!-- <p:panelGrid id="pnlComEscopo" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bEscopo}"> Imput de texto original
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-6,ui-grid-col-0,ui-grid-col-2,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" >
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                    <h:outputText value="Escopooooo"/>
+                                    <p:selectOneMenu id="mnEscopo" value="#{documentoController.documentoItemServico.seqServicoEscopo}" filter="true" filterMatchMode="contains" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione o Escopo do Serviço" itemValue="#{null}" />
+                                        <f:selectItems value="#{documentoController.listaDocumentoEscopo}" var="p" itemLabel="#{p.nomeServicoEscopo}" itemValue="#{p.seqServicoEscopo}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid class="Esse panel é para manter o panel pai com 3 colunas " columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{!documentoController.bColaborador}"/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bColaborador}">
+                                    <h:outputText value="Responsável"/>
+                                    <p:selectOneMenu id="mnResponsavel" value="#{documentoController.documentoItemServico.seqColaborador}" filter="true" filterMatchMode="contains" >
+                                        <f:selectItem value="#{null}" itemLabel="Selecione o Responsável" itemValue="#{null}" />
+                                        <f:selectItems value="#{documentoController.listaColaborador}" var="c" itemLabel="#{c.nome}" itemValue="#{c.seqColaborador}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                    <br/>
+                                    <p:commandButton value="Salvar" actionListener="#{documentoController.salvarDocumentoItemServico()}" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or loginController.usuario.acDocNovo != 1}" update="listaEscopo pnlComEscopo" process="@this,mnEscopo,mnResponsavel"/>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+
+                            <p:panelGrid id="listaEscopo" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bEscopo}">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                    <p:dataTable var="i" value="#{documentoController.documento.listaDocumentoItemServico}" emptyMessage="Lista vazia" reflow="true" >
+                                        <p:column headerText="Escopo" sortBy="#{i.servicoEscopoNome}">
+                                            <p:commandLink value="#{i.servicoEscopoNome}"  title="#{i.servicoEscopoNome}"  actionListener="#{documentoController.selecionarDocumentoItemServico(i)}" update=":frmPrincipal"/>
+                                        </p:column>
+
+                                        <p:column headerText="Responsável" sortBy="#{i.colaboradorNome}" rendered="#{documentoController.bColaborador}">
+                                            <p:outputLabel value="#{i.colaboradorNome}"  title="#{i.colaboradorNome}"  />
+                                        </p:column>
+
+                                        <p:column headerText="Remover" width="8%">
+                                            <p:commandButton icon="fa fa-eraser Fs18 white" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or loginController.usuario.acDocNovo != 1}"  immediate="true"  actionListener="#{documentoController.removerDocumentoItemServico(i)}" update=":frmPrincipal">
+                                                <p:confirm  header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                            </p:commandButton>
+                                        </p:column>
+                                    </p:dataTable>                   
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <br/>
+                        <p:messages id="messages"  autoUpdate="true" closable="true" />-->
+
+                        <p:panelGrid id="pnlComMaterial" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bMaterial}">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bMaterial}">
+                                <p:panelGrid id="pnlMaterial" columns="3" layout="grid" styleClass="ui-panelgrid-blank">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Grupo de Serviço"/>
+                                        <p:selectOneMenu id="mnGrupoServico" value="#{documentoController.pGrupoServico}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Selecione um Grupo de Serviço" itemValue="#{null}" />
+                                            <f:selectItem itemLabel="Todos" itemValue="todos"  itemDisabled="#{documentoController.listaMaterialReferencia.size() == 0}"/>
+                                            <f:selectItems value="#{documentoController.listaMaterialReferencia}" var="p"  itemLabel="#{p.referencia}" itemValue="#{p.referencia}" />
+                                            <p:ajax event="change" listener="#{documentoController.buscarServicoNome}" update="pnlPreco pnlPrecoTotal pnlNomeGrupoServico"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" id="pnlNomeGrupoServico" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Serviço"/>
+                                        <p:selectOneMenu id="mnServico" value="#{documentoController.documentoItemMaterial.seqMaterial}" filter="true" filterMatchMode="contains" >
+                                            <f:selectItem value="#{null}" itemLabel="Selecione um Serviço" itemValue="#{null}" />
+                                            <f:selectItems value="#{documentoController.listaMaterialPreco}" var="p"  itemLabel="#{p.material}" itemValue="#{p.seqMaterial}" />
+                                            <p:ajax event="change" listener="#{documentoController.buscarPreco}" update="pnlPreco pnlPrecoTotal pnlPrecoMinimo pnlPrecoMaximo"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Complemento"/>
+                                        <p:inputText value="#{documentoController.documentoItemMaterial.descricao}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid id="pnlServico" columns="8" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-2,ui-grid-col-2,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3,ui-grid-col-3" rendered="#{documentoController.bMaterial}">
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Quantidade" rendered="#{documentoController.idTipoDocumento ne 'taxa de '}"/>
+                                        <p:outputLabel value="Qtde Prevista" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                        <p:inputText id="lblQtde" value="#{documentoController.documentoItemMaterial.qtde}" required="#{param['frmPrincipal:btnSalvarItem']!=null}" requiredMessage="Informe a Quantidade">
+                                            <f:convertNumber locale="pt_BR" minFractionDigits="0" groupingUsed="true" maxIntegerDigits="20"  />
+                                            <!--f:convertNumber locale="pt_BR" pattern="#,#####0.00000" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" /-->
+                                            <p:ajax event="keyup" listener="#{documentoController.calcularTotalItem}" update="pnlPrecoTotal"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlPrecoMinimo" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="VL. Mínimo"/>
+                                        <p:outputLabel value="#{documentoController.precoMinimo}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlPrecoMaximo" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="VL. Máximo"/>
+                                        <p:outputLabel value="#{documentoController.precoMaximo}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlPreco" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="VL. Unitário"/>
+                                        <p:inputText value="#{documentoController.documentoItemMaterial.vlUnitario}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            <p:ajax event="keyup" listener="#{documentoController.calcularTotalItem}" update="pnlPrecoTotal"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlDesconto" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="VL. Desconto"/>
+                                        <p:inputText value="#{documentoController.documentoItemMaterial.vlDesconto}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            <p:ajax event="keyup" listener="#{documentoController.calcularTotalItem}" update="pnlPrecoTotal"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:outputLabel value="Qtde Exec. no Período" />
+                                        <p:inputText value="#{documentoController.documentoItemMaterial.qtdePeriodo}" required="#{param['frmPrincipal:btnSalvarItem']!=null}" requiredMessage="Informe a Qtde Exec. no Período">
+                                            <f:convertNumber locale="pt_BR" pattern="#0" minFractionDigits="0" groupingUsed="true" maxIntegerDigits="20"  />
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid id="pnlPrecoTotal" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel value="Total"/>
+                                        <p:outputLabel  value="#{documentoController.documentoItemMaterial.precoTotal}" >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel >
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <br/>
+                                        <p:commandButton value="Incluir" id="btnSalvarItem" actionListener="#{documentoController.salvarDocumentoItemMaterial()}"  process="@this,pnlServico,pnlMaterial" update="listaMaterial pnlComMaterial pnlValor pnlVTotal pnlVRestante" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or (loginController.usuario.acDocNovo != 1 and documentoController.idTipoDocumento ne '401')}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="listaMaterial" columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bMaterial}">
+                                <p:dataTable id="dtServicos" var="i" value="#{documentoController.documento.listaDocumentoItemMaterial}" emptyMessage="Lista vazia" reflow="true" rendered="#{documentoController.idTipoDocumento eq '381' or documentoController.idTipoDocumento eq '401'}" rowIndexVar="rowIndex">
+
+                                    <p:columnGroup type="header">
+                                        <p:row>
+                                            <p:column rowspan="2" headerText="Item" width="4%" />
+                                            <p:column rowspan="2" headerText="Serviços Executados" width="35%"/>
+                                            <p:column rowspan="2" headerText="Quant." width="5%"/>
+                                            <p:column colspan="3" headerText="Quantidades Executadas" width="20%" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column rowspan="2" headerText="Unidade" width="8%"/>
+                                            <p:column rowspan="2" headerText="Valor Unitário" width="10%"/>
+                                            <p:column rowspan="2" headerText="Desconto" width="10%"/>
+                                            <p:column rowspan="2" headerText="Aplicar Taxa" width="5%" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column rowspan="2" headerText="Valores Executados Período" width="10%" rendered="#{documentoController.idTipoDocumento eq '381'}"/>
+                                            <p:column colspan="2" headerText="Valores Executados " width="15%" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column rowspan="2" headerText="Remover" rendered="#{loginController.usuario.acDocNovo == 1}" width="5%"/>
+                                        </p:row>
+                                        <p:row rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                            <p:column headerText="Anterior" width="4%"/>
+                                            <p:column headerText="No Período" width="4%"/>
+                                            <p:column headerText="Acumulado" width="4%"/>
+                                            <p:column headerText="No Período" width="4%"/>
+                                            <p:column headerText="Acumulado" width="4%"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                    <p:column>
+                                        <p:outputLabel value="#{rowIndex+1}" />
+                                    </p:column>
+                                    <p:column>
+                                        <p:commandLink value="#{i.materialReferencia}-#{i.materialNome} - #{i.descricao}"  title="#{i.materialNome}"  actionListener="#{documentoController.selecionarDocumentoItemMaterial(i)}" update=":frmPrincipal" process="@this"/>
+                                    </p:column>
+
+                                    <p:column sortBy="#{i.qtde }"  style="text-align: center">
+                                        <p:outputLabel value="#{i.qtde}"  title="#{i.qtde}" >
+                                            <!--f:convertNumber locale="pt_BR" pattern="#,#####0.00000" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" /-->
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column id="clmQtdeAnterior" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:outputLabel value="#{i.qtdeAnterior}"/>
+                                    </p:column>
+                                    <p:column rendered="#{documentoController.idTipoDocumento eq '401'}" >
+                                        <h:outputText value="#{i.qtdePeriodo}" />
+                                    </p:column>
+                                    <p:column id="clmQtdeAcumulado" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:outputLabel value="#{i.qtdeAcumulado}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <p:selectOneMenu value="#{i.seqUnidade}">
+                                            <f:selectItems value="#{documentoController.listaTipoUnidade}" itemLabel="#{u.abreviatura}" itemValue="#{u.seqTipoUnidade}" var="u"/>
+                                        </p:selectOneMenu>
+                                    </p:column>
+                                    <p:column  sortBy="#{i.vlUnitario}" style="text-align: right">
+                                        <p:outputLabel value="#{i.vlUnitario}"  title="#{i.vlUnitario}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+
+                                    <p:column  sortBy="#{i.vlDesconto}" style="text-align: right">
+                                        <p:outputLabel value="#{i.vlDesconto}"  title="#{i.vlDesconto}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column style="text-align: center" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:selectBooleanCheckbox value="#{i.chkTaxaCambio}">
+                                            <p:ajax update="dtServicos" listener="#{documentoController.calcularTaxaCambio(i)}" />
+                                        </p:selectBooleanCheckbox>
+                                    </p:column>
+
+                                    <p:column  sortBy="#{i.precoTotal}"  style="text-align: right" rendered="#{documentoController.idTipoDocumento ne '401'}">
+                                        <p:outputLabel value="#{i.precoTotal}"  title="#{i.precoTotal}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column  sortBy="#{i.vlPeriodo}"  style="text-align: right" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:outputLabel value="#{i.vlPeriodo}"  title="#{i.vlPeriodo}" id="lblVlPeriodo" >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column  sortBy="#{i.vlAcumulado}"  style="text-align: right" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                                        <p:outputLabel value="#{i.vlAcumulado}"  title="#{i.vlAcumulado}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+
+                                    <p:column headerText="Remover" rendered="#{loginController.usuario.acDocNovo == 1}" >
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"   immediate="true"  actionListener="#{documentoController.removerDocumentoItemMaterial(i)}" update="dtServicos" disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or loginController.usuario.acDocNovo != 1}">
+                                            <p:confirm header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                    </p:column>
+
+                                    <p:columnGroup type="footer">
+                                        <p:row>
+                                            <p:column colspan="2" style="text-align:right" footerText="Total Serviços" />
+                                            <p:column footerText="#{documentoController.qtdeItemDocumento}" />
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="" />
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="" />
+                                            <p:column footerText="#{documentoController.documento.moeda.concat(documentoController.valorDescDocumento)}" rendered="#{documentoController.idTipoDocumento ne '401' and documentoController.documento.moeda ne '€'}"/>
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="#{documentoController.valorDescDocumento.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.idTipoDocumento ne '401' and documentoController.documento.moeda eq '€'}"/>
+                                            <p:column footerText="" rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+                                            <p:column footerText="#{documentoController.documento.moeda.concat(documentoController.documento.vlTotal)}" rendered="#{documentoController.documento.moeda ne '€'}"/>
+                                            <p:column footerText="#{documentoController.documento.vlTotal.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}"/>
+                                            <p:column footerText="" />
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>   
+
+
+
+                                <p:dataTable var="i" value="#{documentoController.documento.listaDocumentoItemMaterial}" emptyMessage="Lista vazia" reflow="true" rendered="#{documentoController.idTipoDocumento ne '381' and documentoController.idTipoDocumento ne '401'}">
+                                    <p:column headerText="Grupo de Serviço" sortBy="#{i.materialNome}" width="20%">
+                                        <p:commandLink value="#{i.materialReferencia}"  title="#{i.materialReferencia}"  actionListener="#{documentoController.selecionarDocumentoItemMaterial(i)}" update=":frmPrincipal" process="@this"/>
+                                    </p:column>
+                                    <p:column headerText="Serviço" sortBy="#{i.materialNome}" width="30%">
+                                        <p:commandLink value="#{i.materialNome}"  title="#{i.materialNome}"  actionListener="#{documentoController.selecionarDocumentoItemMaterial(i)}" update=":frmPrincipal"/>
+                                    </p:column>
+
+                                    <p:column headerText="Quantidade" sortBy="#{i.qtde }"  style="text-align: center" >
+                                        <p:outputLabel value="#{i.qtde}"  title="#{i.qtde}" >
+                                            <f:convertNumber locale="pt_BR" pattern="#" minFractionDigits="0" groupingUsed="true" maxIntegerDigits="20"  />
+                                        </p:outputLabel>
+                                    </p:column>
+
+                                    <p:column headerText="Unidade" sortBy="#{i.seqUnidade }"  style="text-align: center">
+                                        <p:selectOneMenu value="#{i.seqUnidade}">
+                                            <f:selectItems value="#{documentoController.listaTipoUnidade}" itemLabel="#{u.abreviatura}" itemValue="#{u.seqTipoUnidade}" var="u"/>
+                                        </p:selectOneMenu>  
+                                       </p:column>                                    
+                                    
+                                    <p:column headerText="Pr. Unitário" sortBy="#{i.vlUnitario}" style="text-align: right">
+                                        <p:outputLabel value="#{i.vlUnitario}"  title="#{i.vlUnitario}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+
+                                    <p:column headerText="Desconto" sortBy="#{i.vlDesconto}" style="text-align: right">
+                                        <p:outputLabel value="#{i.vlDesconto}"  title="#{i.vlDesconto}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="5" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+
+                                    <p:column headerText="Total" sortBy="#{i.precoTotal}"  style="text-align: right">
+                                        <p:outputLabel value="#{i.precoTotal}"  title="#{i.precoTotal}"  >
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:column>
+
+
+                                    <p:column headerText="Remover" width="8%">
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"  disabled="#{(documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1) or loginController.usuario.acDocNovo != 1}" immediate="true"  actionListener="#{documentoController.removerDocumentoItemMaterial(i)}" update=":frmPrincipal">
+                                            <p:confirm header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+
+                                    </p:column>
+                                </p:dataTable>  
+
+                                <p:panelGrid id="pnlValor" columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento ne '301' and documentoController.idTipoDocumento ne '401'}"> <!--ne 301 401 -->
+                               <!--p:panelGrid id="pnlValor" columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '381' or documentoController.idTipoDocumento eq '401'}"--> 
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <h:outputText value="Valor de Entrada"/>
+                                        <p:inputText value="#{documentoController.documento.vlEntrada}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                            <p:ajax event="keyup" listener="#{documentoController.calcularEntrada}" update="pnlVTotal pnlVRestante"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid id="pnlVTotal" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <h:outputText value="Total"/>
+                                        <p:outputLabel value="#{documentoController.documento.moeda.concat(documentoController.documento.vlTotal)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                        <p:outputLabel value="#{documentoController.documento.vlTotal.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+                                    <p:panelGrid id="pnlVRestante" columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <h:outputText value="Restante"/>
+                                        <p:outputLabel value="#{documentoController.documento.moeda.concat(documentoController.valorRestanteDocumento)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                        <p:outputLabel value="#{documentoController.valorRestanteDocumento.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                            <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>                        
+                        </p:panelGrid>
+
+                        <br/>
+
+                        <p:separator rendered="#{documentoController.idTipoDocumento eq '401'}"/>
+
+                        <p:panelGrid id="pnlCalculoBoletim" columns="3" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.idTipoDocumento eq '401'}">
+                            <p:panelGrid id="pnlValorExecutado" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <h:outputText value="Valor Executado Acumulado" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlExecutadoAcumulado)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlExecutadoAcumulado.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2" minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid  id="pnlTributosNInclusos" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <h:outputText value="Tributos Não Inclusos" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlTributosNaoIncluso)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlTributosNaoIncluso.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid  id="pnlValorBruto" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <h:outputText value="Valor Bruto do Boletim" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlBruto)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlBruto.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid  id="pnlISSQNRetido" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <h:outputText value="ISSQN Retido" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlISSQNRetido)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlISSQNRetido.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="aliquotaRetencoesFederais" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <h:outputText value="Retenções Federais" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlRetencaoFederal)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2"  groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlRetencaoFederal.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2"  groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid  id="pnlValorLiquido" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <h:outputText value="Valor Líquido a Receber" />
+                                <h:outputText value="#{documentoController.documento.moeda.concat(documentoController.documento.vlLiquidoAReceber)}" rendered="#{documentoController.documento.moeda ne '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                                <h:outputText value="#{documentoController.documento.vlLiquidoAReceber.toString().concat(documentoController.documento.moeda)}" rendered="#{documentoController.documento.moeda eq '€'}">
+                                    <f:convertNumber locale="pt_BR" pattern="#,##0.00" maxFractionDigits="2"  minFractionDigits="2" groupingUsed="true" maxIntegerDigits="20" type="currency" currencySymbol="R$" />
+                                </h:outputText>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <p:commandButton id="btnCalcularValores" value="Calcular Valores" actionListener="#{documentoController.calcularBoletim()}" update="pnlValorExecutado pnlTributosNInclusos pnlValorLiquido pnlValorBruto pnlISSQNRetido aliquotaRetencoesFederais" process="@this,mnAliquotaFederais,mnProjecao,mnAliquotaRetido,mnRetencaoIssqn,mnTributos,mnOrigemCliente" disabled="#{documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+
+                        <p:separator rendered="#{documentoController.idTipoDocumento eq '401'}" />
+
+                        <p:panelGrid id="pnl" columns="1" layout="grid" styleClass="ui-panelgrid-blank"> 
+                            <h:outputText value="Descrição" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                           
+                            
+                            <p:inputTextarea counter="descricao" counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{documentoController.documento.descricao}"/>
+                            <!--<p:editor controls=""  value="#{documentoController.documento.descricao}" />-->
+                            <h:outputText id="descricao"/>
+
+                            <p:separator rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+
+                            <!--<h:outputText value="Observação" rendered="#{documentoController.idTipoDocumento ne '401'}"/>-->
+                            <h:outputText value="Observações" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                            <p:inputTextarea counter="observacao" counterTemplate="{0} caracteres restantes." maxlength="1000"  value="#{documentoController.documento.observacao}" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+                            <!--<p:editor controls=""  value="#{documentoController.documento.observacao}" rendered="#{documentoController.idTipoDocumento ne '401'}"/>-->
+                            <h:outputText id="observacao" rendered="#{documentoController.idTipoDocumento ne '401'}"/>
+
+                        </p:panelGrid>
+
+
+                        <p:separator rendered="#{documentoController.bAssinaturaColaborador}" />
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{documentoController.bAssinaturaColaborador}" > 
+                            <h:outputText value="Colaborador Responsável pela Assinatura" />
+                            <p:selectOneMenu id="mnColaboradorResponsavel" value="#{documentoController.documento.seqAssColaborador}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[COLABORADOR RESPONSÁVEL] é Obrigatório">
+                                <f:selectItem value="#{null}" itemLabel="Selecione um Responsável pela Assinatura" itemValue="#{null}" />
+                                <f:selectItems value="#{documentoController.listaAssColaborador}" var="tp"  itemLabel="#{tp.nome}" itemValue="#{tp.seqColaborador}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+
+                        <p:separator/>
+
+                        <h2 class="BigTopic">Anexos</h2>
+                        <p:accordionPanel >
+                            <p:tab title="Anexos" id="tabAnexos" rendered="#{documentoController.idDocumento != 0}">
+                                <p:panelGrid id="pnlAnexos" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:growl id="messagesg" showDetail="true" />
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-4,ui-grid-col-4"> 
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                            <p:outputLabel value="Tipo de Arquivo"/>
+                                            <p:inputText value="#{documentoController.upload.tipoArquivo}" />
+                                        </p:panelGrid>                            
+                                        <p:fileUpload label="Selecionar Arquivo" value="#{documentoController.arquivo}" mode="simple" skinSimple="true"/>
+                                        <p:commandButton value="Adicionar" ajax="false" actionListener="#{documentoController.upload}" rendered="#{loginController.usuario.acDocNovo == 1}" update="tabAnexos"/>
+                                    </p:panelGrid>                            
+                                </p:panelGrid>
+                                <p:dataTable id="tblAnexos" var="a" rowIndexVar="id" value="#{documentoController.listaUpload}" emptyMessage="Lista vazia" reflow="true">
+                                    <p:column headerText="ID" width="8%" style="text-align: center">
+                                        <p:outputLabel value="#{id+1}"/>
+                                    </p:column>
+                                    <p:column headerText="Nome" style="text-align: center">
+                                        <p:outputLabel value="#{a.nomeArquivo}"/>
+                                    </p:column>
+                                    <p:column headerText="Tipo" style="text-align: center">
+                                        <p:outputLabel value="#{a.tipoArquivo}"/>
+                                    </p:column>
+                                    <p:column headerText="Usuário" style="text-align: center">
+                                        <p:outputLabel value="#{a.nomeUsuario}"/>
+                                    </p:column>
+                                    <!--p:column headerText="Visualizar" width="8%" style="text-align: center" >
+                                        <p:commandButton actionListener="#{documentoController.visualizar(a)}" style="width: 50px" immediate="true" ajax="false"  onclick="this.form.target = '_blank'" icon="fa fa-eye white"/>
+                                    </p:column-->
+                                    <p:column headerText="Download" width="8%" style="text-align: center" >
+                                        <p:commandButton actionListener="#{documentoController.download(a)}" style="width: 50px" ajax="false" onclick="this.form.target = '_blank'" icon="fa fa-arrow-circle-down white">
+                                            <p:fileDownload value="#{documentoController.fileDownload}" />
+                                        </p:commandButton>
+                                    </p:column>
+                                    <p:column headerText="Remover" width="8%" style="text-align: center">
+                                        <p:commandButton icon="fa fa-eraser white" style="width: 50px" styleClass="RedButton" actionListener="#{documentoController.removerAnexo(a)}" rendered="#{documentoController.idDocumento !=0 and loginController.usuario.acDocNovo == 1}" update="tblAnexos">
+                                            <p:confirm header="Confirmação" message="Deseja excluir o anexo?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                            <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                            <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                        </p:confirmDialog> 
+                                    </p:column>
+                                </p:dataTable>
+
+                            </p:tab>
+                        </p:accordionPanel>
+                        <h2 class="BigTopic">Comentários</h2>
+                        <p:accordionPanel >
+                            <p:tab title="Comentários" id="comentario">
+                                <p:dataTable id="tbComentario" var="c" value="#{documentoController.listaDocumentoComentario}" emptyMessage="Lista vazia" reflow="true" >
+
+                                    <p:column headerText="Comentário" sortBy="#{c.comentario}">
+                                        <!--p:commandLink value="#{c.comentario}" actionListener="#{documentoController.selecionarComentario(c)}" update=":frmPrincipal"  /-->
+                                        <p:outputLabel value="#{c.comentario}"/>
+                                    </p:column>
+                                    <p:column headerText="Usuário"  width="25%" sortBy="#{c.usuario}">
+                                        <p:outputLabel value="#{c.usuario}"/>
+                                    </p:column>
+                                    <p:column headerText="Data" width="11%" sortBy="#{c.dataCadastro}">
+                                        <p:outputLabel value="#{c.dataCadastro}"  title="#{c.dataCadastro}"  >
+                                            <f:convertDateTime type="date" pattern="dd/MM/yyyy" dateStyle="medium" locale="pt_BR" timeZone="GMT-3"/>
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <!--p:column headerText="Remover" width="8%" rendered="#{loginController.usuario.acDocNovo == 1}">
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"   actionListener="#{documentoController.removerComentario(c)}" immediate="true" update=":frmPrincipal" >
+                                            <p:confirm header="Confirmação" message="Deseja excluir o Vínculo?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                    </p:column-->
+                                </p:dataTable>     
+
+                                <p:separator/>
+
+                                <p:panelGrid id="pnlComentario"  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <p:outputLabel value="Comentários"/>
+                                        <p:inputTextarea value="#{documentoController.documentoComentario.comentario}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3" rendered="#{loginController.usuario.acDocNovo == 1}" > 
+                                        <p:commandButton value="Salvar"  actionListener="#{documentoController.adicionarComentario()}" update="comentario" disabled="#{documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:tab>
+                        </p:accordionPanel>
+
+                        <!-- MEXER AQUI Alex-->
+                        <h2 class="BigTopic">Documentos Gerados</h2>
+                        <p:accordionPanel >
+                            <p:tab title="Documentos Gerados" >
+
+                                <p:dataTable var="i" value="#{documentoController.listaDocumentoFilho}" emptyMessage="Lista vazia" reflow="true" >
+
+                                    <p:column headerText="Documento" sortBy="#{i.tipoDocumento}">
+                                        <p:commandLink value="#{i.codigo} - #{i.tipoDocumento}" actionListener="#{documentoController.abrirDocumentoFilho(i.seqDocumento)}" target="_blank" immediate="true" ajax="false" />
+                                    </p:column>
+
+                                    <p:column headerText="Etapa" sortBy="#{i.etapa}">
+                                        <p:commandLink value="#{i.etapa}" actionListener="#{documentoController.abrirDocumentoFilho(i.seqDocumento)}" target="_blank" immediate="true" ajax="false" />
+                                    </p:column>
+
+                                </p:dataTable>                   
+
+                            </p:tab>
+                        </p:accordionPanel>
+
+                        <h2 class="BigTopic">Ocorrências</h2>
+                        <p:accordionPanel id="acdOcorrencias" value="#{documentoController.documento.listaDocumentoOcorrencia}" var="o" >
+                            <p:tab title="#{o.tipo} -  #{o.dataFmt} - #{o.usuario}"  >
+                                <h:outputText value="#{o.descricao}" escape="false" style="color: black;"/>
+                            </p:tab>
+                        </p:accordionPanel>
+
+                        <p:dialog id="telaComentario" header="Tela de Comentário" widgetVar="telaComentario" modal="true" height="150" >
+                            <p:inputTextarea id="lblComentario" value="#{documentoController.documento.comentarioEtapa}" rows="6" cols="15" placeholder="Informe o Motivo do Cancelamento"/>
+                            <!--p:inputTextarea id="lblComentario" value="#{documentoController.documento.comentarioEtapa}" rows="6" cols="15" placeholder="Informe o Motivo do Cancelamento" required="true" requiredMessage="Informe o Motivo do Cancelamento"/-->
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"> 
+                                <p:commandButton value="Salvar"  actionListener="#{documentoController.salvarComentario()}" disabled="#{documentoController.idTipoDocumento eq '401' and loginController.usuario.acFinBoletim != 1}" onclick="PF('telaComentario').hide();" update="acdOcorrencias" process="@this,lblComentario"/>
+                                <p:commandButton value="Cancelar" onclick="PF('telaComentario').hide();"/>
+                            </p:panelGrid>
+                        </p:dialog>
+
+                    </h:form>
+
+                </div>
+            </div>
+        </div>
+
+
+
+    </ui:define>
+
+</ui:composition>

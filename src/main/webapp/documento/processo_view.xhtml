@@ -1,0 +1,236 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+        </style>
+        <style>
+            #tabs li.ui-state-disabled {
+                display: none;
+
+            }
+            .ui-tabs .ui-tabs-panel {background-color: red; border-width: 0; padding: 1em 1.4em; background: none; }                
+
+        </style>
+
+        <f:metadata>
+            <f:viewParam name="id" value="#{processoController.id}" />
+            <f:viewAction  action="#{processoController.configurarTela}" />
+        </f:metadata>
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+
+
+
+                    <h:form id="frmPrincipal" >
+                        <p:messages id="messages"  autoUpdate="true" closable="true" />
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{processoController.id == 0}"> 
+                            <h2 class="BigTopic">Novo Documento</h2>
+                        </p:panelGrid>
+
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{processoController.id > 0}"> 
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" >
+                                <div class="BigTopic">
+                                    <h4>#{processoController.processo.tipoDocumento} </h4>
+                                    <h6>#{processoController.processo.etapa} </h6>
+
+
+                                    <p:commandButton id="dynaButton" value="Opções" type="button" icon="ui-icon-extlink"/>
+
+                                    <p:menu overlay="true" trigger="dynaButton" my="left top" at="left bottom" toggleable="true">
+                                        <p:submenu label="Enviar Para" expanded="false">
+
+                                            <c:forEach items="${processoController.listaDocumentoEtapa}" var="pe"  varStatus="status">
+                                                <p:menuitem value="#{pe.nome}" actionListener="#{processoController.enviarParaProximaEtapa(pe)}" icon="ui-icon-disk cor fa fa-save Fs14"/>
+                                            </c:forEach>
+
+
+                                        </p:submenu>
+                                        <p:submenu label="+ Opções" expanded="true" >
+                                            <p:menuitem value="Novo Documento" actionListener="#{processoController.novo()}" icon="ui-icon-disk cor fa fa-save Fs14"/>
+                                            <p:menuitem value="Nova Ocorrência" icon="ui-icon-disk cor fa fa-save Fs14"/>
+                                        </p:submenu>
+                                    </p:menu>
+
+
+                                </div>
+                            </p:panelGrid>
+
+
+                            <h2 >#{processoController.processo.parceiro}</h2>
+
+                            <div class="Fs16 gray FontRalewaySemiBold">Tipo: #{processoController.processo.parceiroTipoPessoa}</div>
+                            <div class="Fs16 gray FontRalewaySemiBold">Documento: #{processoController.processo.parceiroDocumento}</div>
+                            <div class="Fs16 gray FontRalewaySemiBold">Endereço: #{processoController.processo.parceiroEndereco}</div>
+                            <div class="Fs16 gray FontRalewaySemiBold">Telefone: #{processoController.processo.parceiroTelefone}</div>
+                            <div class="Fs16 gray FontRalewaySemiBold">Email: #{processoController.processo.parceiroEmail}</div>
+
+                            <div class="BigTopic"/>
+
+                        </p:panelGrid>
+
+
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{processoController.id == 0}"> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">Tipo de Documento</div>
+                                <p:selectOneMenu value="#{processoController.processo.seqTipoDocumento}" filter="true" filterMatchMode="contains" required="true" requiredMessage="[TIPO DE PROCESSO] é Obrigatório" >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione um Tipo de Documento " itemValue="#{null}" />
+                                    <f:selectItems value="#{processoController.listaTipoDocumento}" var="tp"  itemLabel="#{tp.nome}" itemValue="#{tp.seqTipoDocumento}" />
+                                    <p:ajax event="change" update="pnlDetalheDocumento" listener="#{processoController.selecionarTipoDocumento()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                <div class="Fs16 gray FontRalewaySemiBold">Parceiro</div>
+                                <p:selectOneMenu value="#{processoController.processo.seqParceiro}" filter="true" filterMatchMode="contains"  required="true" requiredMessage="[PARCEIRO] é Obrigatório"  >
+                                    <f:selectItem value="#{null}" itemLabel="Selecione um Parceiro" itemValue="#{null}" />
+                                    <f:selectItems value="#{processoController.listaParceiro}" var="pa"  itemLabel="#{pa.nome} - #{pa.tipoParceiro}" itemValue="#{pa.seqParceiro}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+
+                        </p:panelGrid>
+
+                        <p:panelGrid id="pnlDetalheDocumento" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{processoController.tipoDocumento.usaMaterial eq 'SIM'}">
+                                <ui:include src="comMaterial.xhtml" />
+                        </p:panelGrid>
+                    </p:panelGrid>
+
+
+                    <p:panelGrid id="pnl" columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                        <div class="Fs16 gray FontRalewaySemiBold">Descrição</div>
+                        <p:editor value="#{processoController.processo.descricao}" rendered="#{processoController.id == 0}"/>
+                        <p:outputLabel escape="false" value="#{processoController.processo.descricao}" rendered="#{processoController.id > 0}"/>
+                    </p:panelGrid>
+
+                    <p:separator/>
+
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank " rendered="#{processoController.id > 0}"> 
+
+                        <h4 >Ocorrências</h4>
+
+                        <p:accordionPanel var="oc" value="#{processoController.listaDocumentoOcorrencia}">
+                            <p:tab title="Tipo: #{oc.tipo} - #{oc.dataFmt} - #{oc.usuario}" >
+
+                                <p:panelGrid columns="5" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <div class="Fs16 gray FontRalewaySemiBold">Tipo</div>
+                                        <p:outputLabel value="#{oc.tipo}"  />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <div class="Fs16 gray FontRalewaySemiBold">Data</div>
+                                        <p:outputLabel value="#{oc.dataFmt}"  />
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <div class="Fs16 gray FontRalewaySemiBold">Usuário</div>
+                                        <p:outputLabel value="#{oc.usuario}"  />
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <div class="Fs16 gray FontRalewaySemiBold">Etapa Anterior</div>
+                                        <p:outputLabel value="#{oc.etapaAnterior}"  />
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" > 
+                                        <div class="Fs16 gray FontRalewaySemiBold">Etapa Posterior</div>
+                                        <p:outputLabel value="#{oc.etapaPosterior}"  />
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank " > 
+                                    <div class="Fs16 gray FontRalewaySemiBold">Descrição</div>
+                                    <p:outputLabel escape="false" value="#{oc.descricao}"  />
+
+                                </p:panelGrid>
+                            </p:tab>
+                        </p:accordionPanel>
+
+                    </p:panelGrid>
+
+
+
+                    <div class="BigTopic"/>
+
+                    <p:panelGrid   columns="2"  layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0" rendered="#{processoController.id == 0}">
+                        <p:commandButton value="Salvar e Abrir" actionListener="#{processoController.salvar(0)}" update=":frmPrincipal"/>
+                        <p:commandButton value="Salvar e Novo" actionListener="#{processoController.salvar(1)}" update=":frmPrincipal"/>
+
+                        <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{processoController.deletar()}" rendered="#{processoController.processo.seqDocumento>0}" update=":frmPrincipal">
+                            <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                        </p:commandButton>
+
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                            <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                        </p:confirmDialog>                                                              
+                    </p:panelGrid>
+
+                </h:form>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+</ui:define>
+
+</ui:composition>

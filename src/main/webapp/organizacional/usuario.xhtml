@@ -1,0 +1,919 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                template="/WEB-INF/template.xhtml">
+
+    <ui:define name="head">
+        <script type="text/javascript">
+            function skinChart() {
+                this.cfg.shadow = false;
+                this.cfg.seriesColors = ['#71CC8D', '#33AFDE', '#F7941E'];
+                this.cfg.grid = {
+                    background: '#EDF3F6',
+                    borderColor: '#D9E3E8',
+                    gridLineColor: '#D9E3E8',
+                    shadow: false
+                };
+                this.cfg.axesDefaults = {
+                    rendererOptions: {
+                        textColor: '#778D9B'
+                    }
+                };
+                this.cfg.seriesDefaults = {
+                    shadow: false,
+                    markerOptions: {
+                        shadow: false
+                    }
+                }
+            }
+
+            function skinPie() {
+                this.cfg.seriesColors = ['#dae8ef', '#27aae1', '#33ccff', '#9fadb5'];
+                this.cfg.grid = {
+                    background: '#ffffff',
+                    borderColor: '#eaeaea',
+                    gridLineColor: '#e5ebf0',
+                    shadow: false,
+                    borderWidth: 0
+                };
+                this.cfg.seriesDefaults.shadow = false;
+            }
+            /*Botão topo*/
+            $(document).ready(function () {
+                $(window).scroll(function () {
+                    if ($(this).scrollTop() > 100) {
+                        $('a[href="#top"]').fadeIn();
+                    } else {
+                        $('a[href="#top"]').fadeOut();
+                    }
+                });
+
+                $('a[href="#top"]').click(function () {
+                    $('html, body').animate({scrollTop: 0}, 800);
+                    return false;
+                });
+            });
+        </script>
+        <style type="text/css">
+            .jqplot-target, .jqplot-axis {
+                color: #778D9B;
+            }
+            /*Botão topo */
+            a[href="#top"]{
+                padding:10px;
+                position:fixed;
+                top: 90%;
+                right:2px;
+                display:none;
+                font-size: 30px;
+            }
+            a[href="#top"]:hover{
+                text-decoration:none;
+            }
+        </style>
+
+        <f:metadata>
+            <f:viewAction  action="#{usuarioController.iniciar()}" />
+        </f:metadata>
+
+    </ui:define>
+
+    <ui:define name="content"  >
+
+        <div class="layout-portlets-box" >
+            <div class="Container100 ui-fluid">
+                <div class="ContainerIndent"> 
+
+                    <a href="#top"><p:commandButton icon="fa fa-arrow-up Fs18 white"/></a>
+
+                    <h2 class="BigTopic">Usuário</h2>
+                    <p:messages id="messages"  autoUpdate="true" closable="true" />
+                    <h:form id="frmLista" >
+
+                        <div class="Container100 Responsive100">
+                            <p:panelGrid rendered="#{usuarioController.tela == 0}" columns="3" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-3,ui-grid-col-0,ui-grid-col-0">
+                                <p:outputLabel value="Pesquisa"/>
+                                <p:outputLabel value=""/>
+                                <p:outputLabel value=""/>
+
+                                <p:inputText value="#{usuarioController.pesquisa}"/>
+                                <p:commandButton value="Buscar" actionListener="#{usuarioController.listarUsuario()}" update="listaPesquisa"/>
+                                <p:commandButton value="Novo" actionListener="#{usuarioController.novaUsuario()}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acOrgUsuario == 1}" />
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="Container100 Responsive100" >
+                            <p:dataTable id="listaPesquisa" var="u" value="#{usuarioController.listaUsuario}" rendered="#{usuarioController.tela == 0}" reflow="true" style="" emptyMessage="Lista vazia" paginator="true" rows="15"  rowsPerPageTemplate="15,50,100">
+
+                                <p:column headerText="Usuário" sortBy="#{u.usuario}">
+                                    <p:commandLink value="#{u.usuario}"  title="#{u.usuario}"  actionListener="#{usuarioController.selecionar(u)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Email" sortBy="#{u.email}">
+                                    <p:commandLink value="#{u.email}"  title="#{u.email}"  actionListener="#{usuarioController.selecionar(u)}" ajax="false" update=":frmDetalhe :frmLista" />
+                                </p:column>
+
+                                <p:column headerText="Situação" sortBy="#{u.situacao}" >
+                                    <h:outputText value="#{u.situacao}" />
+                                </p:column>
+
+                                <p:column headerText="Detalhe" width="8%">
+                                    <p:commandButton icon="fa fa-search Fs18 white"  actionListener="#{usuarioController.selecionar(u)}" ajax="false" update=":frmDetalhe :frmLista"/>
+                                </p:column>
+                            </p:dataTable>
+
+                        </div>
+                    </h:form>
+
+                    <h:form id="frmDetalhe">
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank" rendered="#{usuarioController.tela == 1}"> 
+                            <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+
+
+
+                                <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+                                    <h:outputText value="Usuário" />
+                                    <p:inputText value="#{usuarioController.usuario.usuario}" required="true" requiredMessage="USUÁRIO é obrigatório"/>     
+                                </p:panelGrid>
+
+
+                                <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+                                    <h:outputText value="Email" />
+                                    <p:inputText value="#{usuarioController.usuario.email}" required="false" requiredMessage="E-MAIL é obrigatório"/>    
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+                                    <h:outputText value="Unidade de Negócio" />
+                                    <p:selectOneMenu value="#{usuarioController.usuario.seqUnidadeNegocio}" >
+                                        <f:selectItem itemLabel="Selecione a Unidade de Negócio" itemValue="#{null}" />
+                                        <f:selectItems value="#{usuarioController.listaUnidadeNegocio}" var="un" itemLabel="#{un.nome}" itemValue="#{un.seqUnidadeNegocio}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+                                    <h:outputText value="Departamento" />
+                                    <p:selectOneMenu value="#{usuarioController.usuario.seqDepartamento}" >
+                                        <f:selectItem itemLabel="Selecione o Departamento" itemValue="#{null}" />
+                                        <f:selectItems value="#{usuarioController.listaDepartamento}" var="dp" itemLabel="#{dp.nome}" itemValue="#{dp.seqDepartamento}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+
+                                <!--p:panelGrid columns="2" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-10,ui-grid-col-2"-->
+                                <p:panelGrid columns="1" layout="grid" style="border:0px !important; background:none;" styleClass="ui-panelgrid-blank">
+                                    <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank"-->
+                                        <h:outputText value="Situação" />
+                                        <p:selectOneMenu value="#{usuarioController.usuario.situacao}" >
+                                            <f:selectItem itemLabel="Ativo" itemValue="ATIVO" />
+                                            <f:selectItem itemLabel="Inativo" itemValue="INATIVO" />
+                                        </p:selectOneMenu>
+                                    <!--/p:panelGrid-->
+                                    <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                        <p/>
+                                        <p:commandButton value="Redefinir Senha" styleClass="BlueButton" actionListener="#{usuarioController.redefinirSenha()}" update=":frmDetalhe :frmLista">
+                                            <p:confirm header="Confirmação" message="Deseja redefinir a senha desse usuário?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+
+                                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                            <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                            <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                        </p:confirmDialog>      
+                                    </p:panelGrid-->
+                                </p:panelGrid>
+                                <p:separator/>
+                                <h2>Acessos</h2>
+                                <!--p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" >
+
+                                    <p:selectBooleanCheckbox   itemLabel="Parceiro" value="#{usuarioController.usuario.acParceiro}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Cadastro" value="#{usuarioController.usuario.acCadastro}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Documentos" value="#{usuarioController.usuario.acDocumento}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Operacional" value="#{usuarioController.usuario.acOperacional}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Organizacional" value="#{usuarioController.usuario.acOrganizacional}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Relatório Documento" value="#{usuarioController.usuario.acRelDocumento}" />
+                                    <p:selectBooleanCheckbox   itemLabel="Relatório de Parceiro" value="#{usuarioController.usuario.acRelParceiro}" />
+                                    <p:panelGrid/>
+                                </p:panelGrid-->
+
+                                <p:tabView>
+                                    <p:tab title="Parceiro de Negócio">
+                                        <p:panelGrid id="parceiro" columns="2" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acParceiro}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1"/>
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="parceiro"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acParceiro != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acParceiro == 1}">
+                                                <p:outputLabel value="Novo:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acParNovo}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Todos:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acParTodos}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <!--f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" /-->
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <p:tab title="Documento">
+                                        <p:panelGrid id="documento" columns="3" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-5">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acDocumento}" style="width:125px" >
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="documento tabelaDocumento"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acDocumento != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acDocumento == 1}">
+                                                <p:outputLabel value="Novo:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acDocNovo}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change"  update="documento tabelaDocumento"/>
+
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acDocumento != 1}"/>
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-5,ui-grid-col-5" rendered="#{usuarioController.usuario.acDocumento == 1}">
+                                                <h:outputText value="Tipo de Documento" />
+                                                <h:outputText value="" />
+                                                <p:selectOneMenu value="#{usuarioController.usuarioTipoDocumento.seqTipoDocumento}" >
+                                                    <f:selectItem itemLabel="Selecione o Tipo de Documento" itemValue="#{null}" />
+                                                    <f:selectItems value="#{usuarioController.listaTipoDocumento}" var="dp" itemLabel="#{dp.nome}" itemValue="#{dp.seqTipoDocumento}" />
+                                                </p:selectOneMenu>
+                                                <p:commandButton value="Adicionar" actionListener="#{usuarioController.salvarTipoDocumento()}" update=":frmDetalhe" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>   
+
+                                        <p:separator/>
+
+                                        <p:panelGrid id="tabelaDocumento" columns="1" styleClass="ui-panelgrid-blank">
+                                            <p:dataTable  var="i" value="#{usuarioController.listaUsuarioTipoDocumento}" emptyMessage="Lista vazia" reflow="true" rendered="#{usuarioController.usuario.acDocumento == 1}">
+                                                <p:column headerText="Tipo de Documento" sortBy="#{i.tipoDocumentoNome}">
+                                                    <h:outputText value="#{i.tipoDocumentoNome}"  />
+                                                </p:column>
+
+                                                <p:column headerText="Remover" width="8%" rendered="#{loginController.usuario.acOrgUsuario == 1}">
+                                                    <p:commandButton icon="fa fa-eraser Fs18 white"   immediate="true"  actionListener="#{usuarioController.deletarTipoDocumento(i)}" update=":frmDetalhe">
+                                                        <p:confirm  header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                                    </p:commandButton>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <p:tab title="Relatórios">
+                                        <p:panelGrid id="relatorios" columns="2" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acRelatorio}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="relatorios"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acRelatorio != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acRelatorio == 1}">
+                                                <p:outputLabel value="Documento:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acRelDocumento}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <!--f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" /-->
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Parceiro:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acRelParceiro}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <!--f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" /-->
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Pesquisa de Satisfação:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acRelPesqSatisfacao}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <!--f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" /-->
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <p:tab title="Operacional">
+                                        <p:panelGrid id="operacional" columns="3" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-6">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOperacional}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="operacional"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acOperacional != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acOperacional == 1}">
+                                                <p:outputLabel value="Embarcação:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOpEmbarcacao}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Equipamento:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOpEquipamento}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Vistoria:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOpVistoria}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Licença:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOpLicenca}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Certificado:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOpCertificado}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acOperacional != 1}"/>
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acOperacional == 1}" >
+                                                <h:panelGrid columns="2" cellpadding="10" width="auto">
+                                                    <p:outputLabel value="Cadastro:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpCadastro}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                        <p:ajax event="change" update="operacional"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" width="auto" rendered="#{usuarioController.usuario.acOpCadastro == 1}"> 
+                                                    <!--p:outputLabel value="Tipo de Vínculo - Embarcação:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpTvinculo}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu-->
+                                                    <p:outputLabel value="Tipo de Vistoria" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpTvistoria}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Certificado:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpTcertificado}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Licença:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpTlicenca}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Status de Vistoria:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpStatusVistoria}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Calculo de Datas:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acOpCalculoData}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <!--p:tab title="Cadastro">
+                                        <p:panelGrid id="cadastro" columns="2" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-7">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acCadastro}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="cadastro"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acCadastro != 1}"/>
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acCadastro == 1}">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                                    <h:panelGrid columns="2" cellpadding="10">
+                                                        <p:outputLabel value="Parceiro" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadParceiro}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                            <p:ajax event="change" update="cadastro"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+
+                                                    <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acCadParceiro == 1}">
+                                                        <p:outputLabel value="Tipo de Parceiro:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTparceiro}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                        <p:outputLabel value="Tipo de Vínculo:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTvinculo}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                        <p:outputLabel value="Tipo de Caracteristica:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTcaracteristica}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                        <p:outputLabel value="Tipo de Endereço:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTendereco}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+                                                </p:panelGrid>
+
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank">
+                                                    <h:panelGrid columns="2" cellpadding="10">
+                                                        <p:outputLabel value="Documento" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadDocumento}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                            <p:ajax event="change" update="cadastro"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+                                                    <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acCadDocumento == 1}">
+                                                        <p:outputLabel value="Tipo de Documento:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTdocumento}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+                                                </p:panelGrid>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab-->
+                                    <p:tab title="Administrativo">
+                                        <p:panelGrid id="administrativo" columns="4" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acAdministrativo}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="administrativo"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+
+ <!--h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinContasPagar == 1}">
+     <p:outputLabel value="Lançamento Financeiro:" />
+     <p:selectOneMenu  value="#{usuarioController.usuario.acFinCPagarLancamento}" style="width:125px">
+         <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+         <f:selectItem itemLabel="Alteração" itemValue="1" />
+         <f:selectItem itemLabel="Visualização" itemValue="2" />
+     </p:selectOneMenu>
+ </h:panelGrid-->
+                                            <!--/p:panelGrid-->
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo != 1}"/>
+                                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                    <p:outputLabel value="Faturamento:" />
+                                                    <p:selectOneMenu value="#{usuarioController.usuario.acFinFaturamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                        <p:ajax event="change" update="administrativo"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinFaturamento == 1}">
+                                                    <p:outputLabel value="Boletim de Medição:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinBoletim}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Faturamento:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinFFaturamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Contas a Receber" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinContasReceber}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Nota de Débito" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinNotaDebito}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="RLBM - Recibo de Locação de Bens Móveis" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinRLBM}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo != 1}"/>
+                                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                    <p:outputLabel value="Financeiro" />
+                                                    <p:selectOneMenu value="#{usuarioController.usuario.acFinanceiro}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                        <p:ajax event="change" update="administrativo"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinanceiro == 1}">
+                                                    <p:outputLabel value="Ordem de Pagamento" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinOrdemPagamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Contas a Pagar" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinContasPagar}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Conta Corrente" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinContaCorrente}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Prestação de Contas" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinPrestacaoContas}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo != 1}"/>
+                                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acAdministrativo == 1}">
+                                                    <p:outputLabel value="Cadastro:" />
+                                                    <p:selectOneMenu value="#{usuarioController.usuario.acFinCadastro}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                        <p:ajax event="change" update="administrativo"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="1" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Fiscal" />
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Projeção Tributária:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinProjecaoTributaria}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Alíquotas:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinAliquotaRetencaoFederal}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Documento Fiscal:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinDocFiscal}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="1" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Gerencial" />
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Categoria (Nível I)" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinCategoria}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Natureza (Nível II)" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinTLancamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Centro de Custo:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinCentroCusto}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="1" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Geral" />
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acFinCadastro == 1}">
+                                                    <p:outputLabel value="Equipamento:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinEquipamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Unidade:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinTunidade}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Contas Bancárias:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinContas}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Formas de Pagamento:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinFpagamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Condição de Pagamento:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinCpagamento}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Informações Importantes:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acFinInformacaoImportante}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <p:tab title="Comercial">
+                                        <p:panelGrid id="comercial" columns="3" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acComercial}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="comercial"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acComercial != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acComercial == 1}">
+                                                <p:outputLabel value="Serviço:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acComServico}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Tabelas de Preço:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acComTpreco}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Escopo:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acComEscopo}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Ponto de Serviço:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acComPservico}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acComercial != 1}"/>
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acComercial == 1}">                                                    
+                                                <h:panelGrid columns="2" cellpadding="10" width="auto">
+                                                    <p:outputLabel value="Parceiro" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acCadParceiro}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                        <p:ajax event="change" update="comercial"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="2" cellpadding="10" width="auto" rendered="#{usuarioController.usuario.acCadParceiro == 1}">
+                                                    <p:outputLabel value="Tipo de Parceiro:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acCadTparceiro}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Vínculo:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acCadTvinculo}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Caracteristica:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acCadTcaracteristica}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                    <p:outputLabel value="Tipo de Endereço:" />
+                                                    <p:selectOneMenu  value="#{usuarioController.usuario.acCadTendereco}" style="width:125px">
+                                                        <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                        <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                        <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                    </p:selectOneMenu>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+
+                                                <!--p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acComercial != 1}"/>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acComercial == 1}">
+                                                    <h:panelGrid columns="2" cellpadding="10" width="auto">
+                                                        <p:outputLabel value="Documento" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadDocumento}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                            <p:ajax event="change" update="comercial"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+                                                    
+                                                    <h:panelGrid columns="2" cellpadding="10" width="auto" rendered="#{usuarioController.usuario.acCadDocumento == 1}">
+                                                        <p:outputLabel value="Tipo de Documento:" />
+                                                        <p:selectOneMenu  value="#{usuarioController.usuario.acCadTdocumento}" style="width:125px">
+                                                            <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                            <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                            <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                        </p:selectOneMenu>
+                                                    </h:panelGrid>
+                                                </p:panelGrid-->
+                                        </p:panelGrid>
+                                    </p:tab>
+                                    <!--p:tab title="Pessoal">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10"> 
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <h:panelGrid columns="2" cellpadding="10"> 
+                                                <p:outputLabel value="Alterar Senha:" />
+                                                <p:selectOneMenu value="#" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab-->
+                                    <p:tab title="Organizacional">
+                                        <p:panelGrid id="organizacional" columns="2" layout="grid" styleClass="ui-panelgrid-blank"  columnClasses="ui-grid-col-3,ui-grid-col-3">
+                                            <h:panelGrid columns="2" cellpadding="10">
+                                                <p:outputLabel value="Ao menu:" />
+                                                <p:selectOneMenu  value="#{usuarioController.usuario.acOrganizacional}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Com Acesso" itemValue="1" />
+                                                    <p:ajax event="change" update="organizacional"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.acOrganizacional != 1}"/>
+                                            <h:panelGrid columns="2" cellpadding="10" rendered="#{usuarioController.usuario.acOrganizacional == 1}">
+                                                <p:outputLabel value="Usuário:" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgUsuario}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Unidade de Negócio:" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgUnegocio}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Departamento:" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgDepartamento}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Função:" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgFuncao}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Colaborador" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgColaborador}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                                <p:outputLabel value="Parâmetros:" />
+                                                <p:selectOneMenu value="#{usuarioController.usuario.acOrgParametro}" style="width:125px">
+                                                    <f:selectItem itemLabel="Sem Acesso" itemValue="-1" />
+                                                    <f:selectItem itemLabel="Alteração" itemValue="1" />
+                                                    <f:selectItem itemLabel="Visualização" itemValue="2" />
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                </p:tabView>
+
+                                <p:separator/>
+
+                                <!--p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank" rendered="#{usuarioController.usuario.seqUsuario != null}">
+                                    <h:outputText value="Tipo de Documento" />
+                                    <h:outputText value="." />
+                                    <p:selectOneMenu value="#{usuarioController.usuarioTipoDocumento.seqTipoDocumento}" >
+                                        <f:selectItem itemLabel="Selecione o Tipo de Documento" itemValue="#{null}" />
+                                        <f:selectItems value="#{usuarioController.listaTipoDocumento}" var="dp" itemLabel="#{dp.nome}" itemValue="#{dp.seqTipoDocumento}" />
+                                    </p:selectOneMenu>
+                                    <p:commandButton value="Adicionar" actionListener="#{usuarioController.salvarTipoDocumento()}" update=":frmDetalhe" />
+                                </p:panelGrid>
+
+                                <p:dataTable var="i" value="#{usuarioController.listaUsuarioTipoDocumento}" emptyMessage="Lista vazia" reflow="true" rendered="#{usuarioController.usuario.seqUsuario != null}">
+                                    <p:column headerText="Tipo de Documento" sortBy="#{i.tipoDocumentoNome}">
+                                        <h:outputText value="#{i.tipoDocumentoNome}"  />
+                                    </p:column>
+
+                                    <p:column headerText="Remover" width="8%">
+                                        <p:commandButton icon="fa fa-eraser Fs18 white"   immediate="true"  actionListener="#{usuarioController.deletarTipoDocumento(i)}" update=":frmDetalhe">
+                                            <p:confirm  header="Confirmação" message="Confirma a exclusão desse ítem?" icon="ui-icon-alert" />
+                                        </p:commandButton>
+                                    </p:column>
+                                </p:dataTable-->
+
+
+                            </p:panelGrid>
+
+
+                            <h2 class="BigTopic"> </h2>
+
+                            <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank" columnClasses="ui-grid-col-0,ui-grid-col-0,ui-grid-col-0,ui-grid-col-0">
+                                <p:commandButton value="Salvar e Fechar" actionListener="#{usuarioController.salvarUsuario(0)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acOrgUsuario == 1}"/>
+                                <p:commandButton value="Salvar" actionListener="#{usuarioController.salvarUsuario(1)}" update=":frmDetalhe :frmLista" rendered="#{loginController.usuario.acOrgUsuario == 1}"/>
+                                <p:commandButton value="Voltar" immediate="true" actionListener="#{usuarioController.mudarTela(0)}" update=":frmDetalhe :frmLista" />
+                                <p:commandButton value="Deletar" styleClass="RedButton" actionListener="#{usuarioController.deletarUsuario()}" rendered="#{usuarioController.usuario.seqUsuario!=0 and loginController.usuario.acOrgUsuario == 1}" update=":frmDetalhe :frmLista">
+                                    <p:confirm header="Confirmação" message="Deseja excluir o registro?" icon="ui-icon-alert" />
+                                </p:commandButton>
+
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Sim" type="button" styleClass="ui-confirmdialog-yes" />
+                                    <p:commandButton value="Não" type="button" styleClass="ui-confirmdialog-no" />
+                                </p:confirmDialog>                                                              
+
+                            </p:panelGrid>
+
+
+                        </p:panelGrid>
+
+                    </h:form>
+                </div>
+            </div>
+        </div>
+    </ui:define>
+
+</ui:composition>
